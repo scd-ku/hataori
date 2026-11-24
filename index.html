@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>はたおり｜3D織機シミュレーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#326c4c;--greenlight:#ebf3ed;--text:#26362d;--sub:#66766d;--line:#dce5dc;--red:#f20b30;--paper:#f5f8f5}*{box-sizing:border-box}
+body{margin:0;color:var(--text);background:var(--paper);font:15px/1.6 -apple-system,BlinkMacSystemFont,'Noto Sans JP',Meiryo,sans-serif}
+header{border-bottom:1px solid var(--line);background:white;padding:17px max(18px,calc((100vw - 1450px)/2))}
+h1{margin:3px 0 2px;font-size:clamp(20px,2.4vw,30px);line-height:1.32;letter-spacing:-.02em}
+header p{margin:0;color:var(--sub);font-size:13px}.brand{font-size:10px;letter-spacing:.14em;font-weight:750;color:var(--green)}
+.main{max-width:1480px;margin:0 auto;padding:14px 16px 32px;display:grid;grid-template-columns:minmax(0,1.9fr) minmax(330px,1fr);gap:14px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px;min-width:0}
+h2{font-size:16px;margin:0 0 10px}h3{font-size:13px;margin:15px 0 5px}.small{font-size:12px;color:var(--sub)}.em{font-weight:800;color:var(--green)}
+.scene-shell:fullscreen{height:100vh;width:100vw;border-radius:0}.scene-shell.expanded{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:100}.scene-shell{position:relative;overflow:hidden;background:#2f3237;border:1px solid #555961;border-radius:8px;height:clamp(400px,53vw,680px);touch-action:none}
+#scene{position:relative;z-index:2;display:block;width:100%;height:100%;cursor:grab;touch-action:none;background:transparent}
+#loom-gpu{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:1;pointer-events:none;background:#2f3237}
+.scene-shell .scene-hint,.scene-shell .scene-stage,.scene-shell .shaft-legend,.scene-shell .scene-control-panel{z-index:5}#scene:active{cursor:grabbing}
+.scene-hint{position:absolute;left:12px;top:11px;background:#1f2328e8;padding:7px 10px;border-radius:8px;pointer-events:none;font-size:12px;color:#e6eaef;box-shadow:0 1px 5px #00000009}
+.scene-stage{position:absolute;bottom:10px;left:10px;background:#20242ae6;border:1px solid #dae5dd;border-radius:8px;padding:7px 11px;pointer-events:none;box-shadow:0 2px 9px #22452b0a}
+.scene-orientation{position:absolute;right:12px;top:12px;background:#20242ade;color:#f1f1ef;padding:6px 9px;border-radius:8px;font-size:11px;pointer-events:none}.scene-stage b{font-size:13px;color:#f4f5f5}.scene-stage span{display:block;font-size:11px;color:#c7d0d8}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:13px 0 9px}
+button,select{font:inherit;font-size:13px;color:var(--text);background:#fff;border:1px solid #cbdacf;border-radius:7px;padding:8px 10px;cursor:pointer}
+button:hover,select:hover{background:#f3f7f4}button.primary{color:white;background:var(--green);border-color:var(--green);font-weight:750}button.primary:hover{background:#24573a}
+button:disabled{opacity:.4;cursor:default}.ctrlcol{display:flex;align-items:center;gap:7px}.ctrlcol label{font-size:12px;color:var(--sub)}
+input[type=range]{width:100%;accent-color:var(--green);cursor:pointer}
+.views{display:flex;gap:7px;flex-wrap:wrap}.views button{padding:6px 9px}
+.grid-a{display:grid;grid-template-columns:1fr 1fr;gap:10px}.muted{background:#f8faf8;border:1px solid #e6ede6;border-radius:7px;padding:10px}
+.stat{font-size:13px}.stat strong{font-size:19px;color:var(--green)}
+.pedals{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:8px 0}
+.pedal{border:1px solid #d7e1d6;background:#f4f7f3;border-radius:8px;text-align:center;padding:8px 3px;min-height:65px}
+.pedal.active{border:2px solid #41885c;background:#dff0e4;padding:7px 2px}
+.pedal strong{font-size:21px;line-height:1.35;display:block}.pedal small{font-size:11px;color:var(--sub)}
+#detail{font-size:13px;line-height:1.75}.thread-row{display:flex;gap:0;margin:6px 0 9px;min-height:36px;border:1px solid #c7d8c9;border-radius:5px;overflow:hidden}
+.band{flex:1;min-width:0;display:grid;place-items:center;font-weight:700;font-size:11px;border-right:1px solid #70757033}
+.band.red{background:var(--red);color:white}.band.white{background:white;color:#506457}.band.now{outline:3px solid #287747;outline-offset:-3px}
+.pattern{display:grid;grid-template-columns:repeat(16,1fr);border:1px solid #bec9c0;aspect-ratio:1;max-width:336px;margin:5px auto}
+.pixel{border:0.5px solid #9ca69b25}.pixel.red{background:#ff082b}.pixel.white{background:#fff}.pixel.focus{box-shadow:inset 0 0 0 2px #377f50}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--sub);margin-top:5px}.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.alert{padding:10px 11px;background:#fffaf0;border:1px solid #eedfbe;border-radius:8px;font-size:12px;margin-top:8px}
+progress{width:100%;height:9px;accent-color:var(--green)}.steps{display:flex;align-items:center;gap:8px}.steps button{font-size:12px}
+.tip{background:var(--greenlight);border-left:3px solid var(--green);padding:9px 11px;margin-top:10px;font-size:12px}
+.foot{max-width:1450px;margin:auto;padding:0 17px 25px;font-size:12px;color:var(--sub)}.foot a{color:var(--green)}
+.step-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:11px}.step-strip span{border:1px solid #d4e1d7;border-radius:5px;background:#f7faf8;color:#576c5e;padding:7px 4px;text-align:center;font-size:10px}.step-strip span.on{background:#d8efde;border-color:#3c8156;color:#195632;font-weight:800}
+@media(max-width:680px){.step-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1020px){.main{grid-template-columns:minmax(0,1fr)}.scene-shell{height:min(68vw,620px)}.right-blocks{display:grid;grid-template-columns:1fr 1fr;gap:10px}.right-blocks>section{min-width:0}}
+@media(max-width:650px){.main{padding:8px;gap:8px}.panel{padding:10px}.scene-shell{height:430px}.scene-hint{font-size:10px}.right-blocks{grid-template-columns:1fr}.controls{gap:5px}button,select{font-size:12px;padding:7px 9px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+.weave-settings{display:flex;flex-wrap:wrap;align-items:end;gap:10px;border:1px solid #dae6dd;background:#f5f9f5;border-radius:10px;padding:11px;margin:12px 0 8px}.weave-settings .ctrlcol{flex-direction:column;align-items:stretch;gap:2px}.weave-settings label{font-size:11px;font-weight:650;color:#4d6151}.weave-settings select{min-width:115px;max-width:260px}.weave-settings .ctrlcol:first-child select{min-width:225px}.mode-notice{font-size:12px;border-left:3px solid #668a70;padding:9px 11px;margin-bottom:9px;background:#f2f6f3}.mode-notice.warning{background:#fff2e6;border-color:#b47636;color:#754820}.pedal-sequence{margin-top:7px;display:flex;gap:4px;flex-wrap:wrap}.seq-item{border:1px solid #d4ded5;background:#f7faf8;border-radius:5px;padding:3px 7px;font-size:11px}.seq-item.current{background:#d4eadc;border-color:#588263;font-weight:bold}.pattern.weave-draft{aspect-ratio:1}.pattern.weave-draft .pixel.up{background:#406b89}.pattern.weave-draft .pixel.down{background:#f5eee0}.pattern.weave-draft .pixel.focus{box-shadow:inset 0 0 0 2px #f39e31}
+@media(max-width:650px){.weave-settings .ctrlcol{flex:1 1 130px}.weave-settings .ctrlcol:first-child{flex:1 1 100%}.weave-settings .ctrlcol:first-child select{min-width:0;width:100%}}
+
+.thread-controls{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;margin:8px 0 5px}.thread-setting{background:#f8faf8;border:1px solid #d8e3db;border-radius:9px;padding:10px 12px}.thread-setting h3{margin:0 0 5px;font-size:13px}.thread-edit{display:flex;flex-wrap:wrap;align-items:center;gap:7px 13px}.thread-edit label{display:flex;align-items:center;gap:7px;font-size:12px;color:#405347}.thread-edit input[type=color]{width:40px;height:32px;border:1px solid #bacdc0;border-radius:7px;background:#fff;padding:2px;cursor:pointer}.thread-edit input[type=range]{flex:1 0 130px;min-width:90px;max-width:310px}.thread-edit output{font-weight:750;font-variant-numeric:tabular-nums}.thread-note{font-size:11px;color:#708078;line-height:1.5;margin-bottom:8px}.crossings-summary{background:#f7faf8;border:1px solid #e1e9e1;border-radius:8px;padding:9px 12px;margin-bottom:8px}.crossings-summary b{font-size:12px;margin-right:10px}.crossings-summary span{font-size:11px;color:#5e7065}.crossing-cells{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:3px;margin-top:7px}.crossing-cell{border-radius:4px;text-align:center;padding:4px 0 2px;line-height:1.2;font-size:14px;font-weight:bold}.crossing-cell.top{background:#d6e9f4;color:#225477}.crossing-cell.bottom{background:#eee1d1;color:#79512d} .crossing-cell small{display:block;font-size:9px;opacity:.9;font-weight:650}
+.crossing-cell{border:1px solid var(--shaft-color,#7195a2)!important;border-left:5px solid var(--shaft-color,#7195a2)!important;background:var(--shaft-pale,#edf3f5)!important;color:#24323a!important}
+.crossing-cell.top{box-shadow:inset 0 3px 0 var(--shaft-color,#7195a2)}
+.crossing-cell.bottom{opacity:.68}
+.crossing-cell .mini-shaft{display:block;font-size:8px;font-weight:700;line-height:1.4}
+.pedal{border-top:4px solid var(--shaft-color,#7c9497)!important}
+.pedal.active{background:var(--shaft-pale,#e8eef1)!important;border:2px solid var(--shaft-color,#7c9497)!important;border-top-width:4px!important;color:#26343b}
+.pedal strong{color:var(--shaft-dark,#334e59)!important}
+.shaft-row{border-left:3px solid var(--shaft-color)!important;padding-left:5px!important}
+.shaft-row .lift{color:var(--shaft-color)!important}
+.palette-notice{font-size:11px;color:#587068;margin:5px 0 0}
+@media(max-width:750px){.thread-controls{grid-template-columns:1fr}.crossing-cell{font-size:11px}.crossing-cell small{font-size:8px}}
+
+/* Playback and view controls live inside the 3D window. */
+.scene-control-panel{position:absolute;z-index:15;right:12px;top:43px;width:min(340px,calc(100% - 25px));max-height:calc(100% - 95px);overflow:auto;background:rgba(31,35,40,.94);border:1px solid #62686d;border-radius:10px;color:#fff;box-shadow:0 8px 24px #0007;touch-action:auto}
+.scene-control-panel summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:9px 11px;gap:9px;font-size:13px;font-weight:700;user-select:none;list-style:none}
+.scene-control-panel summary::-webkit-details-marker{display:none}
+.scene-control-panel summary:before{content:'⚙';font-size:15px;margin-right:3px}
+.scene-control-panel summary small{font-size:10px;color:#bec7cb;font-weight:400}
+.scene-control-panel[open] summary{border-bottom:1px solid #5c6066}
+.scene-control-panel .scene-controls-inner{padding:9px 10px 12px;display:grid;gap:7px}
+.scene-control-panel .controls{margin:0;gap:5px}
+.scene-control-panel button,.scene-control-panel select{font-size:11px;padding:6px 7px;line-height:1.25;background:#343a40;color:#f6f8f7;border:1px solid #677077;border-radius:5px}
+.scene-control-panel button:hover,.scene-control-panel select:hover{background:#465058}
+.scene-control-panel button.primary{background:#32704f;border-color:#62a780;color:white}
+.scene-control-panel .ctrlcol{gap:5px}
+.scene-control-panel .ctrlcol label,.scene-control-panel label{font-size:11px;color:#e1e8e9}
+.scene-control-panel #cameraPreset{max-width:156px}
+.scene-control-panel #projMode{max-width:210px}
+.scene-orientation{right:auto;left:12px;top:46px}
+.scene-hint{max-width:calc(100% - 25px);font-size:11px}
+ruby rt{font-size:.59em;font-weight:400;line-height:1;text-align:center;letter-spacing:0}
+@media(max-width:650px){.scene-control-panel{top:45px;right:7px;max-height:calc(100% - 105px);width:min(290px,calc(100% - 15px))}.scene-control-panel button{font-size:10px}.scene-orientation{top:48px;left:6px;font-size:9px}}
+
+/* Drag the floating tool panel by its heading, without moving the 3D view. */
+.scene-control-panel summary{touch-action:none;cursor:grab;position:relative}
+.scene-control-panel summary:active{cursor:grabbing}
+.scene-control-panel summary small{pointer-events:none}
+.scene-control-panel.is-dragging{user-select:none;box-shadow:0 16px 32px #000b;border-color:#a5bba9}
+@media(max-width:650px){.scene-control-panel{max-width:min(340px,calc(100% - 18px))}}
+
+/* Shaft guides: direct numeric labels in the model + fixed status legend. */
+.shaft-legend{position:absolute;right:12px;bottom:12px;z-index:12;pointer-events:none;
+ background:rgba(26,30,36,.88);border:1px solid #65727c;border-radius:10px;
+ padding:9px 10px;color:#f6f8fa;min-width:162px;box-shadow:0 4px 18px #0005}
+.shaft-legend .legend-title{font-size:11px;font-weight:750;margin-bottom:6px}
+.shaft-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0;
+ font-size:11px;line-height:1.35}
+.shaft-row i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.shaft-row .lift{font-weight:750;font-size:11px;opacity:.95}
+.shaft-row.up .lift{color:#d2f0df}.shaft-row.down .lift{color:#d0d8df}
+.shaft-legend small{display:block;font-size:10px;color:#abb9c2;margin-top:5px}
+@media(max-width:650px){.shaft-legend{padding:6px 8px;bottom:8px;right:8px;min-width:128px}.shaft-row{font-size:10px;margin:2px 0}.shaft-legend small{display:none}}
+
+/* Title help and accessible dialog */
+.header-title-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.header-title-row h1{flex:1;min-width:0}
+.help-open{display:inline-flex;align-items:center;gap:6px;justify-content:center;border-radius:20px;border:1px solid #88a995;background:#f1f7f2;color:#285b3b;font-size:15px;font-weight:800;padding:7px 14px;white-space:nowrap}
+.help-open:hover{background:#e1f0e4}
+.help-dialog{position:fixed;inset:auto 0 auto auto;top:60px;margin:0 20px 0 auto;width:min(660px,calc(100vw - 26px));max-height:min(84dvh,850px);overflow:auto;color:#273b2e;background:#fff;border:1px solid #bed0c1;border-radius:13px;box-shadow:0 18px 55px #122b1c66;padding:0;z-index:300}
+.help-dialog::backdrop{background:rgba(16,28,22,.42)}
+.help-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:15px;background:#f1f7f2;padding:13px 18px;border-bottom:1px solid #dbe8dd}
+.help-head h2{margin:0;font-size:19px}.help-close{font-size:12px;white-space:nowrap}
+.help-body{padding:9px 20px 20px;font-size:13px;line-height:1.9}.help-body section{margin:14px 0 22px}.help-body h3{font-size:15px;border-bottom:1px solid #d9e6dc;margin:0 0 8px;padding-bottom:5px}.help-body p{margin:6px 0}.help-body ol,.help-body ul{padding-left:23px;margin:6px 0}.help-body li{margin:5px 0}
+.speed-slider{width:100%;padding:7px 7px 5px;display:flex;flex-direction:column;gap:4px}
+.speed-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.scene-control-panel .speed-top label{font-size:12px;font-weight:750;color:#e8eeee}
+.speed-top output{font-size:14px;min-width:63px;text-align:right;color:#d2f4dd;font-variant-numeric:tabular-nums;font-weight:800}
+.speed-slider input[type=range]{width:100%;min-height:23px;margin:0;accent-color:#91d7a5;touch-action:pan-x}
+.speed-scale{display:flex;justify-content:space-between;font-size:10px;color:#abb8b0;line-height:1.3}
+@media(max-width:650px){.help-dialog{top:10px;right:10px;max-height:90dvh}.help-open span{display:none}.help-open{min-width:42px;height:39px}.header-title-row h1{font-size:clamp(18px,4.8vw,26px)}}
+
+/* ═══════════════════════════════════════════════════════════════
+   MUSEUM EDITION — neutral, generous, light-weight typographic UI
+   Note: keep four shaft colors as functional instructional data.
+   The charcoal 3D viewport is retained for thread contrast.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --green:#35383d; --greenlight:#f5f5f5;
+  --paper:#f4f4f4; --text:#30343a; --sub:#797d82;
+  --line:#e2e3e4; --museum-bg:#f4f4f4;
+  --museum-ink:#30343a; --museum-sub:#747a80;
+  --museum-line:#e0e2e4; --museum-white:#fff;
+}
+html{background:var(--museum-bg)}
+body{
+  background:var(--museum-bg);color:var(--museum-ink);
+  font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic','Helvetica Neue',Arial,sans-serif;
+  font-weight:300;line-height:1.72;letter-spacing:.012em;
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  background:#fff;border-bottom:1px solid var(--museum-line);
+  padding:22px max(22px,calc((100vw - 1450px)/2));
+}
+header .brand{display:none}
+h1, h2, h3{color:#30343a;font-weight:400;letter-spacing:.01em}
+h1{font-size:clamp(21px,2.4vw,30px);line-height:1.4;margin:0 0 5px}
+h2{font-size:15px}h3{font-size:13px}
+header p{color:var(--museum-sub);font-size:12px;font-weight:300;letter-spacing:.02em}
+.main{padding:22px 16px 34px;gap:16px}
+.panel{
+  background:#fff;border:1px solid var(--museum-line);
+  border-radius:5px;padding:18px;box-shadow:none;
+}
+.small,.thread-note,.palette-notice,.ctrlcol label,
+.thread-edit label,.weave-settings label,.crossings-summary span,
+.pedal small{color:var(--museum-sub);font-weight:300}
+button,select,input,output{font-family:inherit;letter-spacing:inherit}
+button,select{
+  color:#32363a;background:#fff;border:1px solid #d8dadd;
+  border-radius:4px;font-size:12px;font-weight:400;
+  box-shadow:none;
+}
+button:hover,select:hover{background:#f5f5f5;border-color:#abb0b5}
+button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{
+  outline:2px solid #8d979f;outline-offset:2px;
+}
+button.primary,.scene-control-panel button.primary{
+  color:#fff;background:#383c40;border-color:#383c40;font-weight:500;
+}
+button.primary:hover,.scene-control-panel button.primary:hover{
+  background:#555a60;border-color:#555a60;
+}
+input[type=range]{accent-color:#6a737b}
+input[type=checkbox]{accent-color:#737c84}
+input[type=color]{border-radius:3px}
+.muted,.thread-setting,.crossings-summary{
+  background:#f8f8f8;border:1px solid #e5e6e7;
+  border-radius:4px;
+}
+.weave-settings{
+  background:#f8f8f8;border:1px solid #e5e6e7;
+  border-radius:4px;margin:14px 0 10px;
+}
+.weave-settings label{color:#64696f;font-weight:400}
+.thread-setting h3{font-weight:400}
+.thread-edit label{color:#5d646b}
+.thread-edit input[type=color]{border-color:#d5d7da}
+.thread-edit output{font-weight:500}
+.pedal{background:#fafafa;border:1px solid #e0e2e4;border-radius:4px}
+.pedal strong{font-weight:500}
+.pedal.active{box-shadow:none}
+.stat strong{color:#3c444a;font-weight:400}
+.em{color:#363d43;font-weight:500}
+.thread-row{border-color:#d4d6d8}
+.band.white{color:#4f555b}
+.band.now{outline-color:#72787f}
+.pattern{border-color:#cdd0d3}
+.pixel.focus{box-shadow:inset 0 0 0 2px #6d777f}
+.alert{background:#fbfaf7;border:1px solid #e7e1d9;border-radius:4px}
+.tip{
+  background:#f5f5f5;border-left:2px solid #8b9298;
+  color:#545a5f;
+}
+.mode-notice{
+  background:#f7f7f7;border-left:2px solid #858b92;
+  color:#64696f;
+}
+.mode-notice.warning{background:#fbf7f1;border-color:#c8a37b}
+.seq-item{border:1px solid #dedfe0;background:#f9f9f9;border-radius:3px}
+.seq-item.current{background:#e9eaeb;border-color:#858b90;font-weight:500}
+.step-strip span{
+  border:1px solid #e0e2e3;background:#fafafa;
+  border-radius:3px;color:#71777d;font-weight:300;
+}
+.step-strip span.on{
+  background:#e9ebed;border-color:#959ca3;
+  color:#343a40;font-weight:500;
+}
+.crossing-cells .crossing-cell{border-radius:2px}
+.crossing-cell .mini-shaft{font-weight:500}
+.crossing-cell.bottom{opacity:.75}
+.palette-notice{color:#70767b}
+/* Floating controls remain charcoal for contrast with the dark viewport. */
+.scene-shell{border:1px solid #555a61;border-radius:4px}
+.scene-hint,.scene-orientation,.scene-stage,.shaft-legend,
+.scene-control-panel{border-radius:5px;box-shadow:none}
+.scene-control-panel{
+ background:rgba(33,36,40,.97);
+ border:1px solid #71777e;
+}
+.scene-control-panel summary{font-weight:400;letter-spacing:.015em}
+.scene-control-panel summary small{font-weight:300}
+.scene-control-panel button,.scene-control-panel select{
+ background:#32373c;border-color:#666c73;border-radius:3px;
+ color:#f3f4f5;font-weight:400;
+}
+.scene-control-panel button:hover,.scene-control-panel select:hover{
+ background:#464c52;
+}
+.scene-control-panel .speed-top label{font-weight:400}
+.speed-top output{font-weight:500;color:#f3f4f5}
+.speed-slider input[type=range]{accent-color:#c5cbd0}
+.speed-scale{color:#afb4ba}
+.scene-control-panel.is-dragging{border-color:#bdc3c8}
+.shaft-legend .legend-title{font-weight:400}
+.shaft-row .lift{font-weight:500}
+/* Header help: architectural, quiet, no saturated accent. */
+.help-open{
+ background:#fff;color:#4d545a;border:1px solid #d2d5d8;
+ border-radius:4px;font-size:13px;font-weight:400;
+ padding:8px 13px;
+}
+.help-open:hover{background:#f4f4f4;border-color:#aeb4b9}
+.help-dialog{
+ background:#fff;color:#34393d;border:1px solid #d8dadd;
+ border-radius:5px;box-shadow:0 20px 60px rgba(0,0,0,.12);
+}
+.help-dialog::backdrop{background:rgba(26,29,32,.38)}
+.help-head{background:#f7f7f7;border-color:#e3e4e6}
+.help-head h2{font-weight:400}
+.help-body h3{border-color:#e0e2e3;font-weight:400}
+.help-body strong{font-weight:500}
+/* Maintain readable Japanese throughout despite the light design. */
+b,strong{font-weight:500}
+.scene-stage b,.scene-control-panel strong{font-weight:500}
+/* Footer is beneath references, truly at the bottom of the page. */
+.site-footer{
+ max-width:1480px;margin:12px auto 0;
+ padding:0 16px 25px;
+ color:#787d82;font-size:11px;
+}
+.site-footer .foot{
+ max-width:none;margin:0;padding:13px 3px 20px;
+ border-bottom:1px solid #e0e2e4;color:#83878c;
+ line-height:1.9;font-size:11px;font-weight:300;
+}
+.site-footer .foot b{font-weight:400}
+.site-footer .foot a{color:#59616a;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#b5bcc1}
+.site-footer .foot a:hover{color:#232a30;text-decoration-color:#232a30}
+.copyright{
+ text-align:right;letter-spacing:.045em;
+ color:#888e93;padding:20px 3px 6px;
+ font-size:10px;font-weight:300;
+}
+@media(max-width:650px){
+ header{padding:18px 14px}.main{padding:10px 8px 22px}
+ .panel{padding:12px}.site-footer{padding:0 12px 22px}
+ .copyright{text-align:left}
+}
+
+
+/* Loom shaft color key: same palette as 3D frames, labels, pedals, and up/down icons. */
+.shaft-color-key{display:flex;flex-wrap:wrap;gap:7px 14px;align-items:center;line-height:1.6}
+.shaft-color-key>span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-weight:400}
+.shaft-color-key i{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--swatch);border:1px solid #20212728}
+.shaft-color-key b{font-weight:550}
+.shaft-color-name{font-size:10px;opacity:.88;margin-left:4px;font-weight:400}
+.scene-shell .shaft-legend{pointer-events:none}
+
+/* Pedals: filled, dark shaft color + white typography only when pressed. */
+.pedal{
+  background:#fafafa!important;
+  border:1px solid #dfe2e5!important;
+  border-top:4px solid var(--shaft-color,#9ca3af)!important;
+  padding:8px 3px!important;
+  color:#4d555c;
+  box-shadow:none!important;
+  transition:background-color .12s ease,border-color .12s ease;
+}
+.pedal:not(.active) strong{color:var(--shaft-dark,#444a4f)!important}
+.pedal:not(.active) small{color:#686e74!important}
+.pedal.active{
+  background:var(--shaft-pressed,#4d5560)!important;
+  border:2px solid var(--shaft-pressed,#4d5560)!important;
+  border-top-width:4px!important;
+  padding:7px 2px!important;
+  color:#fff!important;
+}
+.pedal.active strong,.pedal.active small{
+  color:#fff!important;
+  opacity:1!important;
+}
+.pedal.active strong{font-weight:700!important}
+.pedal.active small{font-weight:500!important}
+
+/* ═══════════════════════════════════════════════════════════════
+   MINIMAL EDITION — content-first
+   白地・枠線なし・装飾なし。余白と文字の大小だけで階層をつくる。
+   アクセントは1色（青灰）。角は 4–8px。
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+ --bg:#ffffff;--surface:#f6f6f4;--surface-2:#efefec;--ink:#1d2124;--ink-sub:#6b7074;--ink-faint:#9a9fa3;
+ --accent:#33586f;--accent-soft:#e9eff2;--warn:#a5532f;
+ --f-body:'Zen Kaku Gothic New','Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+ --r-s:4px;--r-m:6px;--r-l:8px;
+ --green:var(--accent);--text:var(--ink);--sub:var(--ink-sub);--line:#ececea;
+}
+html,body{background:var(--bg)}
+body{font-family:var(--f-body);font-weight:400;color:var(--ink);letter-spacing:.01em;line-height:1.8;background-image:none;
+ -webkit-font-smoothing:antialiased;font-feature-settings:"palt" 0}
+ruby{letter-spacing:0}
+ruby rt{font-family:var(--f-body);font-size:.5em;font-weight:400;letter-spacing:0;color:inherit;opacity:.7}
+/* ── Header ── */
+header{background:transparent;border-bottom:0;padding:56px max(24px,calc((100vw - 1450px)/2)) 8px}
+header::after{display:none}
+.eyebrow{display:block;font-size:12px;font-weight:500;letter-spacing:.02em;color:var(--ink-faint);margin-bottom:10px;background:none;padding:0}
+.eyebrow::before{display:none}
+.eyebrow span{margin-left:8px;color:var(--ink-faint);font-weight:400}
+.header-title-row{align-items:flex-end}
+h1{font-family:var(--f-body);font-weight:700;font-size:clamp(28px,3vw,38px);line-height:1.4;letter-spacing:0;color:var(--ink);margin:0 0 8px}
+h1 rt{font-size:.32em;font-weight:400}
+h1 .h1-sub{display:block;font-size:.4em;font-weight:500;color:var(--ink-sub);margin-bottom:.15em}
+h1 .h1-sub rt{font-size:.5em}
+header p{font-size:14px;color:var(--ink-sub);max-width:44em;line-height:1.9}
+.help-open{font-family:var(--f-body);background:var(--surface);color:var(--ink);border:0;border-radius:var(--r-m);
+ font-size:13px;font-weight:500;padding:8px 14px;margin-bottom:10px;box-shadow:none}
+.help-open:hover{background:var(--surface-2);color:var(--ink)}
+/* ── Layout：パネルは輪郭なし。余白で区切る ── */
+.main{max-width:1480px;padding:36px 24px 64px;gap:56px;counter-reset:sec}
+.panel{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none}
+.right-blocks>section+section{margin-top:56px}
+@media(max-width:1020px){.right-blocks>section+section{margin-top:0}.right-blocks{gap:40px!important}}
+.panel h2{counter-increment:sec;font-family:var(--f-body);font-weight:700;font-size:20px;letter-spacing:0;line-height:1.55;
+ color:var(--ink);margin:0 0 14px;padding:0;border:0;background:none}
+.panel h2::before{content:counter(sec,decimal-leading-zero) "  ·  " attr(data-en);display:block;font-size:12px;font-weight:500;
+ letter-spacing:.02em;color:var(--ink-faint);background:none;padding:0;margin-bottom:4px;border-radius:0}
+.panel h3{font-family:var(--f-body);font-weight:700;font-size:14px;letter-spacing:0;color:var(--ink);margin:32px 0 8px;padding:0;border:0}
+.panel h3::before{display:none}
+.small,.thread-note,.palette-notice{color:var(--ink-sub);font-weight:400}
+.small{font-size:12.5px}
+#detail{font-size:14px;line-height:1.95}
+#detail b{font-weight:700;color:var(--ink)}
+.em{color:var(--accent)}
+/* ── 図キャプション ── */
+.fig-caption{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin:12px 0 0;padding:0;border:0;font-size:12.5px;color:var(--ink-faint)}
+.fig-caption .fig-no{font-size:12px;font-weight:500;color:var(--ink-faint);background:none;padding:0;border-radius:0;font-style:normal}
+.fig-caption b{font-weight:500;color:var(--ink-sub);font-size:12.5px}
+/* ── フォーム ── */
+button,select{font-family:var(--f-body)}
+.panel select,.panel button{background-color:var(--bg);color:var(--ink);border:1px solid #dcdcd8;border-radius:var(--r-m);padding:7px 12px;font-size:13px;box-shadow:none}
+.panel select{-webkit-appearance:none;appearance:none;padding-right:32px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7074' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+ background-repeat:no-repeat;background-position:right 12px center}
+.panel select:hover,.panel button:hover{border-color:#b9bcbc}
+.panel select:focus-visible,.panel button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.panel select:disabled{opacity:.45}
+input[type=range],input[type=checkbox]{accent-color:var(--accent)}
+.weave-settings{background:transparent;border:0;border-radius:0;padding:0;margin:28px 0 20px;gap:20px}
+.weave-settings label,.grid-a .muted>.small:first-child{font-size:12px;font-weight:500;color:var(--ink-faint);letter-spacing:.01em}
+.weave-settings .ctrlcol{gap:6px}
+.thread-controls{gap:16px;margin:8px 0 6px}
+.thread-setting{background:var(--surface);border:0;border-radius:var(--r-l);padding:14px 16px}
+.thread-setting h3{margin:0 0 6px;font-size:13.5px}
+.thread-edit label{color:var(--ink-sub)}
+.thread-edit input[type=color]{border-radius:var(--r-s);border:1px solid #dcdcd8;background:#fff;height:28px;width:36px}
+.thread-edit output{font-weight:500;color:var(--ink)}
+.thread-note{font-size:12px;line-height:1.8;margin:8px 0 18px}
+.thread-note b{font-weight:500;color:var(--ink-sub)}
+.crossings-summary{background:var(--surface);border:0;border-radius:var(--r-l);padding:14px 16px;margin-bottom:14px}
+.crossings-summary>b{font-weight:700;font-size:13.5px}
+.crossings-summary .crossing-cell{border-radius:var(--r-s)}
+.shaft-color-key i{border-radius:2px}
+.mode-notice{background:transparent;border:0;border-radius:0;padding:0;margin:8px 0 20px;color:var(--ink-sub);font-size:13px}
+.mode-notice.warning{background:transparent;color:var(--warn)}
+/* ── 数値 ── */
+.grid-a{gap:32px}
+.grid-a .muted{background:transparent;border:0;border-radius:0;padding:0}
+.stat{font-size:13px;color:var(--ink-sub);margin:2px 0 6px}
+.stat strong{font-weight:700;font-size:40px;line-height:1.15;color:var(--ink);margin-right:4px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+#summary{font-size:17px;font-weight:700;color:var(--ink);line-height:1.6;padding:4px 0}
+progress{-webkit-appearance:none;appearance:none;height:4px;border:0;border-radius:2px;background:var(--surface-2);overflow:hidden;display:block;margin:10px 0}
+progress::-webkit-progress-bar{background:var(--surface-2);border-radius:2px}
+progress::-webkit-progress-value{background:var(--accent);border-radius:2px}
+progress::-moz-progress-bar{background:var(--accent);border-radius:2px}
+.tip{background:var(--surface);border:0;border-radius:var(--r-l);color:var(--ink-sub);padding:14px 16px;margin-top:24px;font-size:13px;line-height:1.85}
+.step-strip{gap:4px;margin-top:20px}
+.step-strip span{border:0;border-radius:var(--r-m);background:transparent;color:var(--ink-faint);text-align:center;padding:7px 4px;font-size:11.5px;font-weight:400}
+.step-strip span.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+#movementHelp{padding-top:4px;border:0}
+/* ── ペダル・図案 ── */
+.pedals{gap:8px;margin:14px 0}
+.pedal{border-radius:var(--r-l)!important;min-height:70px;padding:8px 4px!important;border-width:0!important;border-top-width:3px!important;box-shadow:none!important}
+.pedal:not(.active){background:var(--surface)!important}
+.pedal strong{font-size:24px!important;font-weight:700!important;font-variant-numeric:tabular-nums}
+.pedal small{font-size:10px;letter-spacing:0;line-height:1.45;display:block}
+.thread-row{border-radius:var(--r-s);border:0;overflow:hidden}
+.band{font-size:12px}
+.pattern{border:0;border-radius:var(--r-s);overflow:hidden;box-shadow:none;margin:20px auto 14px}
+.pixel{border:.5px solid rgba(0,0,0,.05)}
+.pixel.focus{box-shadow:inset 0 0 0 2px var(--accent)}
+.pattern.weave-draft .pixel.up{background:var(--accent)}.pattern.weave-draft .pixel.down{background:#f4f4f1}
+.pattern.weave-draft .pixel.focus{box-shadow:inset 0 0 0 2px #d0482e}
+.legend{font-size:12px;justify-content:center;color:var(--ink-sub)}.legend i{border-radius:2px}
+.alert{background:transparent;border:0;border-radius:0;padding:0;margin-top:14px;color:var(--warn)}
+.seq-item{border-radius:var(--r-s);background:var(--surface);border:0;padding:3px 9px;font-size:11.5px}
+.seq-item.current{background:var(--accent);color:#fff;font-weight:500}
+#threadingList b{font-weight:700;color:var(--ink)}
+/* ── 3D ── */
+.scene-shell{border:0;border-radius:var(--r-l);overflow:hidden;
+ background:linear-gradient(180deg,#4a5b68 0%,#36444f 60%,#2c3841 100%)}
+#loom-gpu{background:transparent}
+.scene-hint,.scene-orientation,.scene-stage,.shaft-legend,.scene-control-panel{
+ border-radius:var(--r-m);background:rgba(24,30,35,.72);border:0;
+ -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#eef0f0;letter-spacing:0;box-shadow:none}
+.scene-hint{font-size:11.5px;padding:6px 12px;color:#cfd4d6}
+.scene-orientation{font-size:11.5px;padding:5px 10px}
+.scene-stage{padding:10px 14px;border:0}
+.scene-stage b{font-size:15px;font-weight:700;color:#fff;background:none;-webkit-text-fill-color:#fff;filter:none}
+.scene-stage span{color:#b9c0c3;font-size:11.5px;margin-top:2px}
+.shaft-legend{padding:12px 14px}
+.shaft-legend .legend-title{font-size:12.5px;font-weight:700;margin-bottom:8px;padding:0;border:0}
+.shaft-row i{border-radius:2px}
+.shaft-legend small{color:#a8b0b3}
+.scene-control-panel{background:rgba(24,30,35,.86)}
+.scene-control-panel summary{font-weight:700;font-size:13px;letter-spacing:0}
+.scene-control-panel summary:before{display:none;content:none}
+.scene-control-panel summary>span{flex:0 0 auto;white-space:nowrap}
+.scene-control-panel summary small{color:#a8b0b3;text-align:right;line-height:1.45}
+.scene-control-panel[open] summary{border-bottom:1px solid rgba(255,255,255,.08)}
+.scene-control-panel button{background:rgba(255,255,255,.08);border:0;border-radius:var(--r-m);color:#f2f3f3}
+.scene-control-panel select{background-color:#2a333a;border:0;border-radius:var(--r-m);color:#f2f3f3;
+ -webkit-appearance:none;appearance:none;padding-right:30px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23eef0f0' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+ background-repeat:no-repeat;background-position:right 11px center}
+.scene-control-panel button:hover{background:rgba(255,255,255,.16)}
+.scene-control-panel select:hover{background-color:#343e46}
+.scene-control-panel select option{color:#1d2124;background:#fff}
+.scene-control-panel button.primary{background:#fff;color:#1d2124;font-weight:700}
+.scene-control-panel button.primary:hover{background:#e9ecec}
+.speed-top output{font-size:16px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.speed-slider input[type=range]{accent-color:#dfe5e7}
+/* ── Help ── */
+.help-dialog{border-radius:var(--r-l);border:0;background:#fff;box-shadow:0 24px 60px rgba(0,0,0,.18)}
+.help-dialog::backdrop{background:rgba(20,24,28,.35)}
+.help-head{background:#fff;border-bottom:1px solid var(--line);padding:18px 24px}
+.help-head h2{font-weight:700;font-size:19px;color:var(--ink);background:none;-webkit-text-fill-color:currentColor;filter:none}
+.help-body{padding:10px 24px 26px}
+.help-body h3{font-weight:700;border:0}
+.help-close{border-radius:var(--r-m);background:var(--surface);border:0}
+/* ── Footer ── */
+.site-footer{max-width:1480px;padding:0 24px 40px}
+.site-footer .foot{border:0;border-top:1px solid var(--line);background:transparent;border-radius:0;padding:20px 0;color:var(--ink-faint);font-size:12px}
+.site-footer .foot b{font-weight:500;color:var(--ink-sub)}
+.site-footer .foot a{color:var(--ink-sub);text-decoration-color:#d4d6d6}
+.copyright{font-size:12px;color:var(--ink-faint);font-style:normal;letter-spacing:0}
+@media(max-width:650px){
+ header{padding:32px 16px 4px}
+ .eyebrow span{display:none}
+ .main{padding:20px 14px 40px;gap:36px}
+ .panel h2{font-size:18px}.stat strong{font-size:32px}
+ .grid-a{grid-template-columns:1fr 1fr;gap:16px}
+}
+
+/* ── 図解とペダル（簡潔版） ── */
+.weave-settings{margin-bottom:24px}
+#weavingTip[hidden],#seq[hidden],#movementText[hidden],.mode-notice:empty,.alert:empty,#threadingDescription:empty,#subCount:empty{display:none}
+.pedals{gap:8px}
+.pedal,.pedal.active{border:1.5px solid var(--shaft-dark)!important;border-radius:var(--r-l)!important;min-height:64px;padding:8px 4px!important;
+ background:var(--shaft-pale)!important;box-shadow:none!important;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.pedal strong{color:var(--shaft-dark)!important;font-size:24px!important;line-height:1.1!important}
+.pedal small{min-height:1.4em;font-size:11px!important;color:var(--shaft-dark)!important}
+.pedal.active{background:var(--shaft-pressed)!important;border-color:var(--shaft-pressed)!important}
+.pedal.active strong,.pedal.active small{color:#fff!important}
+/* 断面図 */
+.crossings-summary{background:transparent;padding:0;margin:4px 0 18px}
+.xs-head{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;font-size:12px;color:var(--ink-sub);margin-bottom:6px}
+.xs-head b{font-size:13.5px;color:var(--ink);margin-right:auto}
+.xs-dot{display:inline-block;width:10px;height:10px;border-radius:50%;border:1.4px solid var(--ink-sub);margin-right:5px;vertical-align:-1px;background:#fff}
+.xs-dot.up{background:var(--ink-sub)}
+.cross-section svg{display:block;width:100%;height:auto}
+.cross-section text{font-size:11px;fill:var(--ink-faint);text-anchor:middle;font-family:var(--f-body)}
+.shaft-color-key{display:flex;gap:16px;margin-top:4px;font-size:11.5px;color:var(--ink-sub)}
+.shaft-color-key i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--swatch);margin-right:5px}
+/* 手順：線画アイコン */
+.step-strip{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin-top:28px}
+.step-strip span{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 2px 8px;border-radius:var(--r-l);background:transparent;
+ color:var(--ink-faint);font-size:11px;line-height:1.3;text-align:center;transition:background .15s,color .15s}
+.step-strip svg{width:100%;max-width:56px;height:auto;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.step-strip svg .faint{opacity:.45}.step-strip svg .wf{stroke-width:2.6;opacity:.7}
+.step-strip svg path:not(.ln):not(.ar):not(.wf){fill:var(--bg)}
+.step-strip em{font-style:normal;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;opacity:.7}
+.step-strip span.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.step-strip span.on svg path:not(.ln):not(.ar):not(.wf){fill:var(--accent-soft)}
+#movementHelp{text-align:center;margin:10px 0 0;font-size:13px;color:var(--ink-sub);min-height:1.8em}
+@media(max-width:680px){.step-strip{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* 通し方：ドラフト図 */
+.threading{margin-top:6px}
+.th-grid{display:grid;gap:2px;align-items:center}
+.th-grid i{aspect-ratio:1;border-radius:2px;background:var(--surface)}
+.th-grid i.on{background:var(--c)}
+.th-lab{font-size:11px;color:var(--ink-faint);text-align:right;padding-right:6px;font-variant-numeric:tabular-nums}
+.th-num{font-size:10px;color:var(--ink-faint);text-align:center;font-variant-numeric:tabular-nums}
+.th-axis{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-faint);margin-top:2px}
+#weavePrinciple b{color:var(--ink)}
+.pedal-sequence{margin-top:10px}
+
+/* ── 3D内の上下バー／3D下の設定＋ペダル ── */
+.scene-shell{height:clamp(560px,60vw,780px)}
+.scene-ui{position:absolute;left:10px;right:10px;z-index:15;background:rgba(24,30,35,.78);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+ border-radius:var(--r-l);color:#eef0f0;font-size:12px}
+.scene-ui button,.scene-ui select{font-family:var(--f-body);font-size:12px;line-height:1.3;padding:6px 10px;border:0;border-radius:var(--r-m);background:rgba(255,255,255,.09);color:#f2f3f3;cursor:pointer;white-space:nowrap}
+.scene-ui button:hover{background:rgba(255,255,255,.18)}
+.scene-ui button.primary{background:#fff;color:#1d2124;font-weight:700}
+.scene-ui button.primary:hover{background:#e9ecec}
+.scene-ui select{background-color:#2a333a;-webkit-appearance:none;appearance:none;padding-right:28px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23eef0f0' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+ background-repeat:no-repeat;background-position:right 10px center}
+.scene-ui select:hover{background-color:#343e46}.scene-ui select:disabled{opacity:.45;cursor:default}
+.scene-ui select option{color:#1d2124;background:#fff}
+.scene-ui .ctrlcol{display:flex;flex-direction:row;align-items:center;gap:7px}
+.scene-ui .ctrlcol label,.scene-ui .sb-label{font-size:11.5px;color:#aeb6b9;white-space:nowrap}
+.scene-top{top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:8px 10px}
+.scene-top .csv-btn{margin-left:auto}
+.scene-top select,.scene-bottom select{width:auto!important;max-width:none!important;min-width:0;flex:none}
+.scene-top .ctrlcol{flex:none}
+.scene-top #mode{width:17.5em!important}.scene-top #density{width:5.5em!important}.scene-top #weftChoice{width:7.5em!important}
+.scene-top{flex-wrap:nowrap;overflow-x:auto}
+.scene-stage{top:66px;left:10px;bottom:auto}
+.shaft-legend{top:66px;right:10px;bottom:auto}
+.scene-bottom{bottom:10px;padding:10px 12px;display:grid;gap:9px;max-height:none;overflow:visible}
+.sb-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.sb-transport{display:flex;flex-wrap:wrap;gap:5px}
+.sb-progress{flex:1 1 260px;display:flex;align-items:center;gap:10px;min-width:220px}
+.sb-pick{font-size:12px;color:#c9cfd1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sb-pick strong{font-size:18px;color:#fff;font-weight:700}
+.sb-progress input[type=range]{flex:1;accent-color:#dfe5e7;min-width:100px}
+.sb-row2{border-top:1px solid rgba(255,255,255,.08);padding-top:9px}
+.scene-bottom .speed-slider{width:auto;flex:0 1 240px;padding:0;display:flex;flex-direction:row;align-items:center;gap:8px}
+.scene-bottom .speed-top{gap:8px;flex:none}.scene-bottom .speed-top label{font-size:11.5px;color:#aeb6b9;font-weight:400}
+.scene-bottom .speed-top output{font-size:13px}
+.scene-bottom .speed-slider input{flex:1;min-height:0}
+.scene-bottom .speed-scale{display:none}
+.sb-checks{display:flex;flex-wrap:wrap;gap:2px 14px}
+.sb-checks label{font-size:11.5px!important;color:#d6dbdc;white-space:nowrap}
+.scene-bottom #fullscreen{margin-left:auto}
+.under-scene{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px;margin:22px 0 26px;align-items:start}
+.under-scene .thread-controls{display:grid;grid-template-columns:1fr;gap:10px;margin:0}
+.us-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.us-head b{font-size:14px;font-weight:700}
+.us-pedals #summary{font-size:13px;font-weight:500;color:var(--ink-sub);padding:0}
+.us-pedals .pedals{margin:0 0 10px}
+.us-pedals progress{margin:0 0 10px}
+.us-pedals #detail{font-size:13px;line-height:1.85}
+@media(max-width:900px){.under-scene{grid-template-columns:1fr;gap:22px}}
+@media(max-width:650px){.scene-shell{height:680px}.scene-stage,.shaft-legend{top:auto;bottom:auto}.shaft-legend{display:none}.scene-stage{top:120px}
+ .scene-top{gap:6px 10px}.scene-top .csv-btn{margin-left:0}.sb-checks{display:none}}
+
+/* ── 3D下：ペダル → 図柄 ── */
+.under-scene{grid-template-columns:1fr;gap:28px}
+.us-pattern .pat-wrap{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.us-pattern .pattern{margin:0;width:min(100%,340px);max-width:340px;flex:none;border:1px solid #e3e4e2}
+.us-pattern .pattern.editable{cursor:crosshair;touch-action:none;user-select:none}
+.us-pattern .pattern.editable .pixel:hover{outline:2px solid rgba(0,0,0,.35);outline-offset:-2px}
+.pat-side{display:flex;flex-direction:column;gap:12px;padding-top:2px}
+.pat-side .legend{justify-content:flex-start}
+.pat-tools{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.pat-tools[hidden],.pat-side .legend[hidden]{display:none}
+.us-head span{font-size:12px;color:var(--ink-faint)}
+.right-blocks .thread-controls{display:grid;grid-template-columns:1fr;gap:10px;margin:0}
+.help-sources a{color:var(--accent)}
+.site-footer{padding-top:8px}
+@media(max-width:650px){.us-pattern .pattern{width:100%;max-width:none}}
+
+/* ── v4 layout ── */
+.shaft-legend[hidden]{display:none!important}
+.under-scene{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)!important;gap:32px!important;align-items:start}
+.us-col{display:flex;flex-direction:column;gap:22px;min-width:0}
+.us-seq .pedal-sequence{margin-top:8px}
+.under-scene .thread-controls{display:grid;grid-template-columns:1fr;gap:10px;margin:0}
+.right-blocks .us-pattern .pattern{width:100%;max-width:360px}
+.right-blocks .us-pattern .pat-wrap{flex-direction:column;gap:12px}
+.right-blocks .pat-side{flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.right-blocks .pat-tools{flex-direction:row;flex-wrap:wrap}
+.right-blocks .us-head{margin-bottom:8px}
+.xs-head{justify-content:flex-end}
+@media(max-width:900px){.under-scene{grid-template-columns:1fr!important}}
+
+/* ── 右列：16列をそろえる共通グリッド ── */
+.right-blocks{--g:54px}
+.c16{display:grid;grid-template-columns:var(--g) minmax(0,1fr);align-items:stretch}
+.c16-g{font-size:10.5px;color:var(--ink-sub);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;white-space:nowrap;line-height:1.2}
+.grid16{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:1px;background:#111;border:1px solid #111;border-radius:0}
+.warp-nums{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:1px;padding:0 1px;font-size:10px;color:var(--ink-sub);text-align:center;font-variant-numeric:tabular-nums;line-height:1.9}
+.right-blocks .us-pattern .pat-wrap{display:block}
+.right-blocks .pat-grid{width:100%}
+.right-blocks .us-pattern .pattern,.right-blocks .pattern{width:100%;max-width:none;margin:0;aspect-ratio:1;border-radius:0;box-shadow:none;overflow:visible}
+.right-blocks .pattern .pixel{border:0!important;border-radius:0}
+.right-blocks .pattern.weave-draft .pixel.up{background:#111!important}
+.right-blocks .pattern.weave-draft .pixel.down{background:#fff!important}
+.right-blocks .pattern .pixel.focus{box-shadow:inset 0 2px 0 #e0452b,inset 0 -2px 0 #e0452b!important}
+.pat-gutter{display:grid;grid-template-rows:repeat(16,minmax(0,1fr));gap:1px;padding:1px 8px 1px 0;align-items:center;justify-content:end}
+.pat-gutter span{font-size:10px;color:transparent;line-height:1}
+.pat-gutter span.on{color:#e0452b}.pat-gutter span.on::before{content:'今の投 ▶'}
+.right-blocks .pat-side{margin-top:12px;padding-left:var(--g)}
+.us-head .lg{display:inline-flex;align-items:center;gap:5px;margin-right:14px;color:var(--ink-sub);font-size:12px}
+.lg i{width:12px;height:12px;border:1px solid #111;display:inline-block}.lg i.lg-up{background:#111}.lg i.lg-down{background:#fff}
+.right-blocks .us-head{padding-left:var(--g)}
+.right-blocks .thread-row{min-height:30px;margin:0;border-radius:0;overflow:visible}
+.right-blocks .thread-row .band{border:0;font-size:12px;font-weight:700;display:grid;place-items:center;min-width:0}
+.right-blocks .crossings-summary{margin:0}
+.right-blocks .xs-head{padding-left:var(--g);justify-content:flex-start}
+.xs-gutter{flex-direction:column;justify-content:center;gap:10px;align-items:flex-end}
+.right-blocks .shaft-color-key{padding-left:var(--g);margin-top:8px}
+.right-blocks #caution{padding-left:var(--g)}
+.th-lead{font-size:12.5px;color:var(--ink-sub);margin:-4px 0 12px}
+.th-labs{display:grid;gap:1px;padding:1px 8px 1px 0;justify-content:stretch}
+.th-labs span{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10.5px;color:var(--ink-sub)}
+.th-labs i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.th-cells{aspect-ratio:4/1}
+.th-cells i{background:#fff;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:700;color:#111;min-height:0}
+.th-cells i.on{background:var(--c)}
+
+/* ═══════════════════════════════════════════════════════════════
+   TYPOGRAPHY & GRID — Zen Old Mincho (見出し) + Noto Sans JP (本文)
+   8px ベースライン／12カラム（3D 8：右列 4）／ガター 48px
+   文字サイズ：12 / 14 / 16 / 24 / 40px、行送りはすべて 8 の倍数
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+ --f-body:'Noto Sans JP','Hiragino Sans','Hiragino Kaku Gothic ProN',sans-serif;
+ --f-head:'Zen Old Mincho','Hiragino Mincho ProN','Yu Mincho','YuMincho',serif;
+ --u:8px;--gutter:48px;--edge:32px;--wrap:1440px;
+}
+body{font-family:var(--f-body);font-size:14px;line-height:24px;letter-spacing:.04em;font-feature-settings:normal}
+button,select,input{font-family:var(--f-body);letter-spacing:.03em}
+ruby rt{font-family:var(--f-body);font-size:.5em;letter-spacing:0;line-height:1}
+/* 外枠：ヘッダーと本文を同じ 1440px の枠・同じ左右余白にそろえる */
+header{padding:calc(var(--u)*8) var(--edge) calc(var(--u)*3)}
+header>div{max-width:var(--wrap)!important;margin:0 auto}
+.main{max-width:calc(var(--wrap) + var(--edge)*2);padding:calc(var(--u)*4) var(--edge) calc(var(--u)*10);
+ grid-template-columns:minmax(0,8fr) minmax(320px,4fr);column-gap:var(--gutter);row-gap:calc(var(--u)*6)}
+.site-footer{max-width:calc(var(--wrap) + var(--edge)*2);padding:0 var(--edge) calc(var(--u)*5)}
+/* 見出し */
+.eyebrow{font-family:var(--f-body);font-size:12px;line-height:16px;letter-spacing:.12em;margin-bottom:calc(var(--u)*2)}
+h1{font-family:var(--f-head);font-weight:600;font-size:40px;line-height:56px;letter-spacing:.1em;margin:0 0 calc(var(--u)*2)}
+h1 .h1-sub{font-family:var(--f-head);font-size:16px;line-height:24px;font-weight:600;letter-spacing:.16em;margin-bottom:var(--u)}
+h1 rt{font-size:12px;letter-spacing:.04em}
+header p{font-size:14px;line-height:24px;letter-spacing:.06em;max-width:40em;margin:0}
+.help-open{font-family:var(--f-body);font-size:13px;line-height:16px;letter-spacing:.06em;padding:8px 16px}
+.panel h2{font-family:var(--f-head);font-weight:600;font-size:24px;line-height:32px;letter-spacing:.08em;margin:0 0 calc(var(--u)*2)}
+.panel h2::before{font-family:var(--f-body);font-size:12px;line-height:16px;font-weight:500;letter-spacing:.1em;margin-bottom:var(--u)}
+.right-blocks>section+section{margin-top:calc(var(--u)*6)}
+.panel h3,.us-head b,.thread-setting h3{font-family:var(--f-head);font-weight:600;font-size:16px;line-height:24px;letter-spacing:.08em}
+.us-head{margin-bottom:calc(var(--u)*2);gap:calc(var(--u)*2)}
+.us-head span,.small,.thread-note,.th-lead,.fig-caption,.legend,.xs-head{font-size:12px;line-height:20px;letter-spacing:.04em}
+.th-lead{margin:0 0 calc(var(--u)*2)}
+.fig-caption{margin-top:calc(var(--u)*2)}
+.fig-caption b{font-family:var(--f-head);font-weight:600;font-size:14px;letter-spacing:.08em}
+#detail,.us-pedals #detail{font-size:14px;line-height:24px}
+#detail b{font-family:var(--f-body);font-weight:700}
+#weavePrinciple b{font-family:var(--f-head);font-weight:600;letter-spacing:.08em}
+/* 3D下の2カラム（ペダル｜糸の設定）も 8px リズムに */
+.under-scene{column-gap:var(--gutter)!important;row-gap:calc(var(--u)*4)!important;margin:calc(var(--u)*3) 0 0}
+.us-col{gap:calc(var(--u)*4)}
+.pedals{gap:var(--u)}
+.pedal strong,.sb-pick strong,.stat strong{font-family:var(--f-head)!important;font-weight:600!important}
+.pedal small{font-family:var(--f-body)}
+/* 3D内 */
+.scene-stage b{font-family:var(--f-head);font-weight:600;font-size:16px;line-height:24px;letter-spacing:.08em}
+.scene-stage span{font-size:12px;line-height:20px}
+.scene-ui,.scene-ui button,.scene-ui select{font-family:var(--f-body)}
+.help-head h2,.help-body h3{font-family:var(--f-head);font-weight:600;letter-spacing:.08em}
+.help-body{font-size:14px;line-height:24px}
+@media(max-width:1020px){.main{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:650px){
+ :root{--edge:16px;--gutter:24px}
+ header{padding:calc(var(--u)*4) var(--edge) calc(var(--u)*2)}
+ h1{font-size:28px;line-height:40px;letter-spacing:.08em}
+ .panel h2{font-size:20px;line-height:32px}
+}
+.under-scene>.us-col:last-child{gap:0}
+
+/* ═══════════════════════════════════════════════════════════════
+   RULED GRID — 罫線でグリッドを区切る（参考：BNN 商品ページ）
+   全幅の1px黒罫でセクションを分割。項目名は黒地に白抜きのラベル。
+   ═══════════════════════════════════════════════════════════════ */
+:root{--rule:1px solid #111;--pad:32px}
+html,body{background:#fff}
+header{border-bottom:var(--rule)}
+header::after{display:none}
+.main{max-width:none;margin:0;padding:0;column-gap:0;row-gap:0;border-bottom:var(--rule);align-items:stretch}
+.main>.panel{padding:0;border-radius:0;box-shadow:none;background:transparent}
+.main>.panel:first-child{border-right:var(--rule)}
+/* 左：3D */
+.main>.panel:first-child>.scene-shell{margin:var(--pad) var(--pad) 0;border-radius:var(--r-m)}
+.main>.panel:first-child>.fig-caption{margin:12px var(--pad) var(--pad)}
+.main>.panel:first-child>.mode-notice{margin:0 var(--pad) 16px}
+.under-scene{margin:0!important;border-top:var(--rule);column-gap:0!important;row-gap:0!important;align-items:stretch!important}
+.under-scene>.us-col{padding:0 var(--pad) var(--pad);gap:var(--pad)!important}
+.under-scene>.us-col+.us-col{border-left:var(--rule)}
+.us-seq{border-top:var(--rule);margin:0 calc(var(--pad)*-1);padding:0 var(--pad)}
+/* 右：セクションごとに罫で区切る */
+.right-blocks>section{padding:0 var(--pad) var(--pad);margin:0!important;border-bottom:var(--rule)}
+.right-blocks>section:last-child{border-bottom:0}
+/* 白抜きラベル（項目名） */
+.panel h2,.us-head b{display:inline-flex;align-items:baseline;gap:12px;background:#111;color:#fff;
+ font-family:var(--f-head);font-weight:600;font-size:16px;line-height:24px;letter-spacing:.1em;
+ padding:8px 24px;margin:0 0 24px calc(var(--pad)*-1);border-radius:0}
+.panel h2::before{content:counter(sec,decimal-leading-zero);display:inline;color:#fff;background:none;padding:0;margin:0;
+ font-family:var(--f-body);font-size:12px;font-weight:500;letter-spacing:.06em;opacity:.7}
+.panel h2 rt,.us-head b rt{color:#fff}
+.us-head{display:flex;align-items:center;gap:16px;margin:0 0 24px!important;padding:0!important}
+.us-head b{margin-bottom:0}
+.us-head span{font-size:12px;color:var(--ink-sub)}
+.right-blocks .us-head{padding-left:0!important}
+.right-blocks .us-head:empty{display:none}
+.th-lead{margin-top:0}
+/* 糸の設定・ボックス類は罫の中に置くので面をなくす */
+.thread-setting{background:transparent!important;border:0;border-left:var(--rule);border-radius:0;padding:4px 0 4px 16px}
+.thread-setting h3{font-size:14px;line-height:24px}
+/* ボタン：輪郭のみのピル型 */
+.pat-tools button,.panel .help-close{background:#fff!important;border:1px solid #111!important;border-radius:999px!important;color:#111!important;padding:6px 18px!important;font-size:12px}
+.pat-tools button:hover{background:#111!important;color:#fff!important}
+.help-open{background:#fff;border:1px solid #111;border-radius:999px;color:#111}
+.help-open:hover{background:#111;color:#fff}
+.seq-item{border-radius:999px;background:#fff;border:1px solid #111;color:#111}
+.seq-item.current{background:#111;color:#fff;border-color:#111}
+/* 進行バー・脚注 */
+.us-pedals progress{height:2px;border-radius:0}
+.us-pedals progress::-webkit-progress-value,.us-pedals progress::-moz-progress-bar{background:#111;border-radius:0}
+.site-footer{max-width:none;padding:0}
+.site-footer .copyright{padding:16px var(--pad)}
+@media(max-width:1020px){.main>.panel:first-child{border-right:0;border-bottom:var(--rule)}}
+@media(max-width:900px){.under-scene>.us-col+.us-col{border-left:0;border-top:var(--rule)}}
+@media(max-width:650px){:root{--pad:16px}}
+.panel h2,.us-head b{display:inline-block}
+.panel h2::before{margin-right:12px}
+.under-scene>.us-col:last-child{gap:0!important}
+/* ── コンパクトなタイトル行 ── */
+header{padding:24px var(--edge) 20px}
+.header-title-row{display:flex;align-items:center;justify-content:space-between;gap:24px}
+h1{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 24px;font-size:22px;line-height:32px;letter-spacing:.2em;margin:0;font-weight:600}
+h1 .h1-sub{display:inline;font-size:12px;line-height:16px;letter-spacing:.2em;color:var(--ink-sub);margin:0;font-family:var(--f-body);font-weight:400;order:2}
+h1 rt{font-size:9px;letter-spacing:.08em}
+h1 ruby{letter-spacing:inherit}
+header p{font-size:12px;line-height:20px;letter-spacing:.1em;margin-top:8px}
+.help-open{margin:0;padding:6px 16px}
+/* ── 3Dを罫線の枠にぴったり収める（余白0・直角） ── */
+.main>.panel:first-child>.scene-shell{margin:0!important;border:0!important;border-radius:0!important;border-bottom:var(--rule)!important}
+.main>.panel:first-child>.fig-caption{margin:12px var(--pad) 12px}
+.scene-ui,.scene-stage,.scene-ui button,.scene-ui select,.scene-ui button.primary{border-radius:0!important}
+.scene-top{top:0;left:0;right:0}
+.scene-bottom{bottom:0;left:0;right:0}
+.scene-stage{top:56px;left:0}
+/* ── タイトルを詰め、字間にゆとり ── */
+header{padding:14px var(--edge) 12px}
+h1{font-size:20px;line-height:28px;letter-spacing:.32em}
+h1 rt{letter-spacing:.1em}
+header p{margin-top:2px;font-size:11.5px;line-height:18px;letter-spacing:.12em}
+/* ── 3D内のUIは浮かせて角丸に（白抜き見出しと区別） ── */
+.scene-ui{border-radius:10px!important}
+.scene-top{top:10px;left:10px;right:10px}
+.scene-bottom{bottom:10px;left:10px;right:10px}
+.scene-stage{top:66px;left:10px;border-radius:10px!important}
+.scene-ui button,.scene-ui select{border-radius:6px!important}
+.scene-ui button.primary{border-radius:6px!important}
+/* ── QRコード ── */
+.title-with-qr{display:flex;align-items:center;gap:14px}
+.qr-open{width:34px;height:34px;flex:none;display:grid;place-items:center;padding:0;background:#fff;color:#111;border:1px solid #111;border-radius:999px;cursor:pointer}
+.qr-open svg{width:18px;height:18px}
+.qr-open:hover{background:#111;color:#fff}
+.qr-open:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.qr-dialog{border:0;padding:0;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.qr-dialog::backdrop{background:rgba(20,24,28,.45)}
+.qr-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 32px 24px;font-family:var(--f-body)}
+.qr-code svg{width:240px;height:240px;display:block}
+.qr-card p{margin:8px 0 0;font-family:var(--f-head);font-weight:600;font-size:16px;letter-spacing:.12em}
+.qr-url{font-size:12px;color:var(--ink-sub);letter-spacing:.04em}
+.qr-close{margin-top:10px;background:#fff;border:1px solid #111;border-radius:999px;padding:6px 20px;font-size:12px;cursor:pointer}
+.qr-close:hover{background:#111;color:#fff}
+</style></head><body>
+
+<header><div style="max-width:1450px;margin:auto"><div class="header-title-row"><div class="title-with-qr"><button type="button" class="qr-open" id="qrOpen" aria-label="このページのQRコードを表示" title="QRコード"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 5.5h2v2h-2zM16.5 5.5h2v2h-2zM5.5 16.5h2v2h-2zM14 14h3v3h-3zM18 18h3v3h-3zM18 14h3v2h-3zM14 18h2v3h-2z" fill="currentColor"/></svg></button><h1><span class="h1-main">3D織機</span></h1></div><button type="button" id="helpOpen" class="help-open" aria-label="特徴と使い方を開く" aria-haspopup="dialog" aria-controls="loomHelp" title="特徴と使い方">? <span>ヘルプ</span></button></div><p>16本の経糸と4枚の綜絖を使い、さまざまな織り方を立体的に比較できます。</p></div></header>
+<dialog id="loomHelp" class="help-dialog" aria-labelledby="helpTitle"><div class="help-head"><h2 id="helpTitle">特徴と使い方</h2><button type="button" id="helpClose" class="help-close" aria-label="閉じる">✕ 閉じる</button></div><div class="help-body">
+<section><h3>このシミュレーターの特徴</h3><p>16本の経糸（たていと）と4枚の綜絖（そうこう）を使う織機（しょっき）を3D表示します。各綜絖には4本のヘルドがあり、綜絖は<strong>布側の手前から1・2・3・4番</strong>、ペダルは<strong>左から1・2・3・4番</strong>です。</p><p>綴織（つづれおり）・平織（ひらおり）・綾織（あやおり）・保多織（ぼたおり）・4枚朱子風（しゅすふう）を比較できます。<strong>五枚朱子（ごまいしゅす）は5枚の綜絖が必要なため、実機とは異なる参考表示</strong>です。</p><p>糸は円形断面の3Dモデルで、経糸と緯糸（よこいと）の交差、綜絖の上げ下げ、筬（おさ）の打ち込み、小杼（こび）の移動を表示します。糸の色と太さも変更できます。</p></section>
+<section><h3>基本操作</h3><ol><li>3D画面の下にある<strong>「織り方」</strong>を選びます。赤白図案を試すときは綴織を選択してください。</li><li><strong>「図案1段あたり」</strong>で1～4投（とう）を選びます。平織なども同じ16本の経糸で比較できます。</li><li>3D画面内の<strong>「操作・視点・投影」</strong>から再生・一時停止・1投ずつの移動・再生速度の調整を行います。再生速度はスライダーで<strong>0.05倍～10倍</strong>の間を連続的に変更できます。</li><li>経糸・緯糸のカラーピッカーと太さのスライダーを調整します。綜絖の色は1＝桃色、2＝橙色、3＝黄緑色、4＝紫色です。踏んだペダルは濃い背景色と白文字で示します。</li><li>必要なら「全投の操作表（CSV）」で、踏むペダルと使用する糸の手順を保存します。</li></ol></section>
+<section><h3>マウス・視点の操作</h3><ul><li><strong>左ドラッグ：</strong>3Dを回転</li><li><strong>右ドラッグ：</strong>視点を上下左右へ平行移動</li><li><strong>ホイール：</strong>拡大・縮小（専用ボタンはありません）</li><li><strong>視点：</strong>表・裏・真上・横・綜絖の拡大・織り目の拡大などを選択</li><li><strong>投影：</strong>透視投影（遠近あり）／平行投影（遠近なし）を切り替え</li><li><strong>操作パネル：</strong>見出しをドラッグすると3D画面内で移動、クリックすると開閉できます。</li></ul></section>
+<section><h3>部品を手で動かす</h3><p>3D上の<b>綜絖の枠</b>は上下、<b>筬</b>は前後、<b>小杼</b>は左右にドラッグで動かせます（動かすと一時停止）。再生すると、その時点の正しい位置へ自動で戻ってから続きを再開します。</p></section>
+<section><h3>表示について</h3><p>糸は円筒チューブ、木枠・綜絖・筬は角柱の立体モデルです。経糸間隔・緯糸密度は固定した模式表示で、張力や布厚の物理計算はしていません。小杼の長さや上昇後の動きも説明用です。</p></section>
+<section><h3>織り方と表示上の注意</h3><p>綴織では赤と白の小杼を1つずつ使い、色の区間ごとに緯糸を入れる模式表示です。平織・綾織・保多織などでは1投で幅全体に緯糸を通します。上げる綜絖とペダルの番号は対応しています。</p><p>保多織は「3投の平織＋4投目に浮きを作る」原理を示す簡略組織で、伝統的な組織図の完全再現ではありません。4枚朱子風は正式な朱子織ではありません。緯糸の張力や実物の布厚は厳密に計算していません。</p></section>
+<section><h3>資料</h3><p class="help-sources"><a href="https://www.botaori.com/tokucyo.html" target="_blank" rel="noopener">岩部保多織本舗（3回平織＋4回目の浮き）</a> ／ <a href="https://cottonworks.com/learning-hub/weaving/basic-woven-fabric-designs/" target="_blank" rel="noopener">CottonWorks（5枚以上の朱子織）</a> ／ <a href="https://www.applepie.gr.jp/haru/someorikiso/kumiori4.html" target="_blank" rel="noopener">織物組織と綜絖の基礎</a></p></section>
+</div></dialog>
+<main class="main">
+<section class="panel">
+<div class="scene-shell" id="sceneShell"><canvas id="scene" aria-label="手織り機の3Dアニメーション。クリックで再生と一時停止を切り替え、左ドラッグで回転、右ドラッグで平行移動、ホイールで拡大縮小"></canvas>
+<div class="scene-top scene-ui"><div class="ctrlcol"><label for="mode">織り方</label><select id="mode"><option value="plain">平織（1/1）</option><option value="twill">綾織（2/2）</option><option value="hota" selected>保多織（3平＋1浮）</option><option value="satinlike">朱子風（4枚・破れ綾）</option><option value="satin5">五枚朱子（比較専用）</option><option value="oxford">オックスフォード（2本引きそろえ平織）</option><option value="twill13">ツイル（1/3・片面綾）</option><option value="herringbone">ヘリンボーン（杉綾）</option><option value="tapestry">綴織（赤白図柄）</option></select></div><div class="ctrlcol"><label for="density">図案1段あたり</label><select id="density"><option value="1">1投</option><option value="2">2投</option><option value="3">3投</option><option value="4" selected>4投</option></select></div><div class="ctrlcol"><label for="weftChoice">緯糸の使い方</label><select id="weftChoice"><option value="red">色A</option><option value="white">色B</option><option value="alternate">A・B交互</option></select></div><button id="downloadCSV" class="csv-btn">全投の操作表（CSV）</button></div>
+<div class="scene-stage"><b id="stageTitle">開口の準備</b><span id="stageSub">経糸の上下と小杼の動きを表示</span></div><div class="shaft-legend" id="shaftLegend" hidden aria-live="off"><div class="legend-title">綜絖（そうこう）ごとの状態</div><div id="shaftLegendRows"></div><small>↑：上がる　↓：下がる　｜　枠と同じ色</small></div>
+<div class="scene-bottom scene-ui" id="sceneControls">
+ <div class="sb-row">
+  <div class="sb-transport"><button class="primary" id="play">⏸ 一時停止</button><button id="prev" title="1投戻す">◀ 1投</button><button id="next" title="1投進む">1投 ▶</button><button id="segment">次の色区間</button><button id="motion">次の動作</button><button id="restart">最初から</button></div>
+  <div class="sb-progress"><span class="sb-label">織り進み</span><span class="sb-pick"><strong id="pickNumber">1</strong> / <span id="totalPicks">64</span>投</span><input type="range" id="pickRange" min="1" max="64" value="1" aria-label="表示する投数"></div>
+ </div>
+ <div class="sb-row sb-row2">
+  <div class="speed-slider"><div class="speed-top"><label for="speed">再生速度</label><output id="speedValue" for="speed" aria-live="off">1.00×</output></div><input type="range" id="speed" min="0" max="100" step="0.5" value="56.5" aria-label="再生速度を0.05倍から10倍まで調整"><div class="speed-scale"><span>0.05× · スロー</span><span>1×</span><span>10× · 高速</span></div></div><div class="ctrlcol"><label for="cameraPreset">視点</label><select id="cameraPreset"><option value="angled" selected>斜め上（全体）</option><option value="underside">表面（下側）</option><option value="backside">裏面（上側）</option><option value="front">正面</option><option value="top">真上</option><option value="side">横（開口確認）</option><option value="shed">開口を拡大</option><option value="heddles">綜絖を拡大（穴を確認）</option><option value="fabric">織り目を拡大（交差確認）</option></select></div><div class="ctrlcol"><label for="projMode">投影</label><select id="projMode"><option value="persp">透視投影（遠近あり）</option><option value="ortho">平行投影（遠近なし）</option></select></div>
+  <div class="sb-checks"><label style="font-size:12px"><input type="checkbox" id="frames" checked> 綜絖枠（色分け）を表示</label><label style="font-size:12px"><input type="checkbox" id="shaftLabels" checked> 綜絖番号を表示</label>
+<label style="font-size:12px"><input type="checkbox" id="warp" checked> 経糸番号</label>
+
+<label style="font-size:12px"><input type="checkbox" id="parked" checked> 待機中の小杼も表示</label></div>
+  <button id="fullscreen">全画面</button>
+ </div>
+</div></div>
+
+<div class="under-scene">
+<div class="us-col"> <div class="us-pedals"><div class="us-head"><b>ペダル</b><span id="summary"></span></div><div class="pedals" id="pedalBoxes"></div><progress id="subProgress" max="100" value="0"></progress><div id="detail"></div><div class="small" id="subCount"></div></div>
+ <div class="us-seq"><div class="us-head"><b>踏み順</b></div><div class="small" id="weavePrinciple"></div><div class="pedal-sequence" id="pedalSequence"></div></div></div>
+<div class="us-col"><div class="us-head"><b>糸の設定</b></div><div class="thread-controls" aria-label="経糸と緯糸の色と太さ">
+ <div class="thread-setting"><h3>経糸（たていと）</h3><div class="thread-edit"><label for="warpColor">色 <input type="color" id="warpColor" value="#ead7b3" aria-label="経糸の色"></label><label for="warpDiameter">太さ（表示用） <output id="warpDiameterValue">1.5</output> mm相当</label><input type="range" min="0.5" max="3" step="0.1" value="1.5" id="warpDiameter"></div></div>
+ <div class="thread-setting"><h3>緯糸（よこいと）</h3><div class="thread-edit"><label for="weftRedColor">色 A <input type="color" id="weftRedColor" value="#ef1940" aria-label="緯糸Aの色"></label><label for="weftWhiteColor">色 B <input type="color" id="weftWhiteColor" value="#fff9e8" aria-label="緯糸Bの色"></label><label for="weftDiameter">太さ（表示用） <output id="weftDiameterValue">1.5</output> mm相当</label><input type="range" min="0.5" max="3" step="0.1" value="1.5" id="weftDiameter"></div></div>
+</div></div>
+</div>
+<span id="renderModeNote" hidden></span>
+<div id="modeNotice" class="mode-notice"></div>
+
+<div class="tip" id="weavingTip">赤白図柄の綴織は、緯糸を色の区間ごとに通します。小杼は赤1つと白1つだけです。通常の平織・綾織・保多織では1投で幅全体を通します。下側を表として表示します。小杼の上昇後に糸を非表示にする工程は説明用の省略です。</div>
+<div id="phaseGuide" hidden></div><div id="movementHelp" hidden></div>
+</section>
+<section class="panel right-blocks">
+<section><h2 data-en="Draft" id="patternHeading">組織図</h2><div class="us-pattern"><div class="us-head"><span id="patternHint"></span></div>
+ <div class="pat-wrap"><div class="pat-grid"><div class="c16"><span class="c16-g">経糸</span><div class="warp-nums"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span></div></div><div class="c16"><div class="c16-g pat-gutter" id="patGutter"></div><div class="pattern grid16" id="pattern" aria-label="16×16の図柄"></div></div></div>
+ <div class="pat-side"><div class="legend" id="patLegend"><span><i id="legendA" style="background:#ef1940"></i>緯糸A</span><span><i id="legendB" style="background:#fff9e8;border:1px solid #cfd2d0"></i>緯糸B</span></div>
+ <div class="pat-tools" id="patTools"><button type="button" id="patInvert">全体を反転</button><button type="button" id="patClear">すべてB</button><button type="button" id="patReset">元の図柄に戻す</button></div></div></div></div></section>
+<section><h2 data-en="This pick">この投の色区間</h2><div class="c16"><span class="c16-g">緯糸</span><div id="bands" class="thread-row grid16"></div></div><div class="small" id="seq"></div><div class="small" id="movementText" style="margin:8px 0 0;font-weight:700"></div><div class="alert" id="caution">小杼の長さは説明用の模式表示です。</div>
+</section>
+<section><h2 data-en="Cross section">この投の断面</h2><div class="crossings-summary" id="crossingSummary"><div class="xs-head"><span><i class="xs-dot up"></i>経糸が上</span><span><i class="xs-dot"></i>経糸が下</span></div><div class="c16"><div class="c16-g xs-gutter"><span>上</span><span>下</span></div><div class="cross-section" id="crossingCells"></div></div><div class="c16"><span class="c16-g">経糸</span><div class="warp-nums"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span></div></div><div class="palette-notice shaft-color-key" aria-label="綜絖番号と共通色">
+  <span style="--swatch:#ee85b0"><i></i>綜絖1</span>
+  <span style="--swatch:#efa044"><i></i>綜絖2</span>
+  <span style="--swatch:#aed75e"><i></i>綜絖3</span>
+  <span style="--swatch:#ac8bdf"><i></i>綜絖4</span>
+</div></div></section>
+
+<section>
+<h2 data-en="Threading">経糸の綜絖への通し方</h2><p class="th-lead">色のマス＝その経糸を通す綜絖。綜絖は手前（布側）から1・2・3・4。</p><div class="threading" id="threadingList"></div><div class="small" id="threadingDescription"></div>
+<p class="small" id="methodNote" hidden>組織は理解用の立体モデルです。緯糸の張力・布の厚みや色境界の接続は厳密な物理演算ではありません。</p></section>
+</section></main>
+<footer class="site-footer" aria-label="サイト情報と著作権表示">
+
+<div class="copyright">© 2026 Science Communication Design Lab. All rights reserved.</div>
+</footer>
+<script>
+'use strict';
+const PIX=[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,0,1,0,0,1,0,0,0,0,0,1,0,1,1],[1,1,0,1,0,0,1,0,0,0,0,0,1,0,1,1],[1,1,1,0,0,1,0,0,0,0,1,1,0,0,1,1],[1,1,0,1,0,0,1,0,0,1,0,0,1,0,1,1],[1,1,0,1,0,0,1,0,0,1,1,1,1,1,1,1],[1,1,0,1,0,0,1,0,0,1,1,1,1,1,1,1],[1,1,0,1,0,0,1,0,0,0,0,1,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
+const $=id=>document.getElementById(id), N=16;
+
+const WEAVE_READINGS=[
+ ['織物組織','おりものそしき'],['織組織','おりそしき'],['五枚朱子','ごまいしゅす'],
+ ['保多織','ぼたおり'],['綴織','つづれおり'],['綾織','あやおり'],['平織','ひらおり'],
+ ['朱子織','しゅすおり'],['朱子風','しゅすふう'],['破れ綾','やぶれあや'],
+ ['綜絖','そうこう'],['小杼','こび'],['緯糸','よこいと'],['経糸','たていと'],
+ ['筬','おさ'],['織機','しょっき'],['開口','かいこう'],['打ち込み','うちこみ'],
+ ['織り目','おりめ'],['織り方','おりかた'],['織り上がり','おりあがり'],
+ ['投','とう']
+];
+const WEAVE_PATTERN=new RegExp(WEAVE_READINGS.map(x=>x[0]).join('|'),'g');
+const WEAVE_READING_MAP=Object.fromEntries(WEAVE_READINGS);
+function addWeavingFurigana(root=document.body){
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ const nodes=[];while(walker.nextNode()){
+   const n=walker.currentNode,par=n.parentElement;
+   if(!par||par.closest('ruby,rt,script,style,textarea,option,svg,code'))continue;
+   if(WEAVE_READINGS.some(x=>n.nodeValue.includes(x[0]))) nodes.push(n);
+ }
+ for(const node of nodes){
+   const str=node.nodeValue,frag=document.createDocumentFragment();let last=0;
+   WEAVE_PATTERN.lastIndex=0;let m;
+   while((m=WEAVE_PATTERN.exec(str))){
+     // Distinguish '投影' from a weaving pick.
+     if(m[0]==='投'&&str.slice(m.index).startsWith('投影'))continue;
+     if(m.index>last)frag.appendChild(document.createTextNode(str.slice(last,m.index)));
+     const word=m[0],reading=WEAVE_READING_MAP[word];
+     const rb=document.createElement('ruby');rb.appendChild(document.createTextNode(word));
+     const rt=document.createElement('rt');rt.textContent=reading;rb.appendChild(rt);frag.appendChild(rb);
+     // Skip an existing reading in parentheses after the same word, if already present.
+     const suffix='（'+reading+'）',tail=str.slice(m.index+word.length);
+     if(tail.startsWith(suffix)){last=m.index+word.length+suffix.length;WEAVE_PATTERN.lastIndex=last;}
+     else last=m.index+word.length;
+   }
+   if(!last)continue;
+   if(last<str.length)frag.appendChild(document.createTextNode(str.slice(last)));
+   node.replaceWith(frag);
+ }
+}
+function labelOptionReadings(){
+ document.querySelectorAll('option').forEach(opt=>{
+  let st=opt.textContent;
+  for(const [word,kana] of WEAVE_READINGS){
+   if(word==='投')continue;
+   st=st.replaceAll(word,word+'（'+kana+'）');
+  }
+  opt.textContent=st;
+ });
+}
+labelOptionReadings();
+
+const warpColor=()=> $('warpColor').value, colorA=()=> $('weftRedColor').value, colorB=()=> $('weftWhiteColor').value;
+const warpDiameter=()=>Number($('warpDiameter').value),weftDiameter=()=>Number($('weftDiameter').value);
+const warpRadius=()=>.012+.012*warpDiameter(),weftRadius=()=>.012+.012*weftDiameter();
+const WOVEN_Y=-.046, WARP_RISE=()=>warpRadius()+weftRadius()+.03;
+function tint(hex,how){const v=hex.replace('#','');const vals=[0,2,4].map(i=>parseInt(v.slice(i,i+2),16));return '#'+vals.map(c=>Math.max(0,Math.min(255,Math.round(how>=0?c+(255-c)*how:c*(1+how)))).toString(16).padStart(2,'0')).join('');}
+const threadColor=(red)=>red?colorA():colorB();
+const wx=i=>-2.63+i*.35;
+const xe=i=>-2.8+i*.35;
+let mode='hota',picksPerBit=4,weftChoice='red';
+const totalPicks=()=>16*picksPerBit;
+const rowOf=p=>clamp(15-Math.floor(p/picksPerBit),0,15);
+const shaftCount=()=>mode==='satin5'?5:4;
+// Herringbone: straight draw 1-2-3-4 twice, then reversed 1-4-3-2 with a break (cut) at the centre.
+const HERRINGBONE_DRAW=[1,2,3,4,1,2,3,4,1,4,3,2,1,4,3,2];
+const shaftFor=i=>mode==='herringbone'?HERRINGBONE_DRAW[i]:(i%shaftCount())+1;
+function liftFor(p){
+ if(mode==='tapestry'||mode==='plain')return p%2===0?[1,3]:[2,4];
+ if(mode==='twill'||mode==='herringbone')return [[1,2],[2,3],[3,4],[4,1]][p%4];
+ if(mode==='oxford')return p%2===0?[1,2]:[3,4];
+ if(mode==='twill13')return [[1],[2],[3],[4]][p%4];
+ if(mode==='hota')return [[1,3],[2,4],[1,3],[1]][p%4];
+ if(mode==='satinlike')return [[1],[3],[2],[4]][p%4];
+ return [[1],[3],[5],[2],[4]][p%5];
+}
+function weftRed(p){return weftChoice==='red'||(weftChoice==='alternate'&&p%2===0);}
+
+const odd=p=>p%2===0;
+const rle=row=>{let out=[];for(let i=0;i<16;){let k=i+1;while(k<16&&row[k]===row[i])k++;out.push({a:i,b:k-1,len:k-i,red:row[i]===0,name:row[i]===0?'赤':'白'});i=k;}return out;};
+const groups=p=>{
+ const g=mode==='tapestry'?rle(PIX[rowOf(p)]):[{a:0,b:15,len:16,red:weftRed(p),name:weftRed(p)?'赤':'白'}];
+ return odd(p)?g:[...g].reverse();
+};
+const fmt=(a,b)=>a===b?String(a+1):`${a+1}～${b+1}`;
+const ease=t=>t*t*(3-2*t);const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));const lerp=(a,b,t)=>a+(b-a)*t;
+let pick=28,elapsed=0,isPlaying=false,speed=1;
+let camera={az:.62,el:.46,dist:11.8,target:[0,0,0]};let size={w:850,h:600,dpr:1};
+const canvas=$('scene'), ctx=canvas.getContext('2d',{alpha:true});
+
+// ── Standalone WebGL cylindrical yarn renderer (no CDN or external files). ──
+// Real 3D tubes use smoothly interpolated vertex normals and the GPU depth buffer.
+// The wooden loom rails and wooden reed have rectangular prism cross sections.
+const gpuCanvas=document.createElement('canvas');gpuCanvas.id='loom-gpu';canvas.parentElement.insertBefore(gpuCanvas,canvas);
+const gl=gpuCanvas.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:true,depth:true,powerPreference:'high-performance'})||gpuCanvas.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:true,depth:true});
+// Material channel per vertex: [arc length / radius, angle around the tube, kind, radius]
+// kind 0 = painted solid, 1 = yarn (plied, twisted), 2 = wood, 3 = metal.
+let MAT=1;const VSTRIDE=13;
+let gpuReady=false, gpuProgram=null, gpuBuffer=null, gpuStaticBuffer=null, gpuStaticCount=0, gpuStaticKey='', gpuDynamicCount=0, gpuDynamicKey='', gpuCachedActive=null, gpuLoc=null, meshVertices=[], gpuDraw=false;
+function compileShader(type,source){const sh=gl.createShader(type);gl.shaderSource(sh,source);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error('GPU shader: '+gl.getShaderInfoLog(sh));return sh;}
+function initGpu(){if(!gl)return false;try{
+ const vs=`precision highp float;
+ attribute vec3 aPos;attribute vec3 aNormal;attribute vec3 aColor;attribute vec4 aYarn;
+ uniform vec3 uCamera,uRight,uUp,uForward;uniform vec4 uViewport;
+ uniform vec3 uProjection;varying vec3 vNormal,vColor,vPos;varying vec4 vYarn;
+ void main(){vec3 d=aPos-uCamera;float depth=dot(d,uForward);float px=dot(d,uRight);float py=dot(d,uUp);
+ float near=0.07;float far=100.0;
+ if(uProjection.x>0.5){float f=uProjection.y;gl_Position=vec4(2.0*f*px/uViewport.x,2.0*f*py/uViewport.y,(far+near)/(far-near)*depth-2.0*far*near/(far-near),depth);}
+ else{float sc=uProjection.z;gl_Position=vec4(2.0*sc*px/uViewport.x,2.0*sc*py/uViewport.y,(2.0*depth-near-far)/(far-near),1.0);}
+ vNormal=aNormal;vColor=aColor;vPos=aPos;vYarn=aYarn;
+ }`;
+ const fs=`precision highp float;varying vec3 vNormal,vColor,vPos;varying vec4 vYarn;
+ uniform vec3 uCamera,uForward;uniform vec3 uPx;
+ void main(){
+  vec3 n=normalize(vNormal);vec3 v=normalize(uCamera-vPos);
+  if(dot(n,v)<0.0)n=-n;
+  vec3 L=normalize(vec3(-0.38,0.86,0.48));vec3 F=normalize(vec3(0.55,0.12,-0.82));
+  float wrap=dot(n,L)*0.5+0.5;float diff=wrap*wrap;float fill=max(0.,dot(n,F));
+  vec3 amb=mix(vec3(0.17,0.20,0.30),vec3(0.40,0.38,0.34),n.y*0.5+0.5);
+  vec3 base=vColor;float kind=vYarn.z;float specK=0.16;float shin=26.0;float rimK=0.05;
+  if(kind>0.5&&kind<1.5){
+   // Plied yarn: three twisted strands + fine fibre striation, faded out when the yarn is only a few pixels wide.
+   float depth=max(0.05,dot(vPos-uCamera,uForward));
+   float px=uPx.x>0.5?vYarn.w*uPx.y/depth:vYarn.w*uPx.z;
+   float detail=smoothstep(1.4,6.0,px);
+   float ply=0.5+0.5*cos(3.0*vYarn.y+vYarn.x*1.45);
+   float groove=0.66+0.34*smoothstep(0.0,0.6,ply);
+   float fib=sin(vYarn.x*23.0+vYarn.y*6.0)*sin(vYarn.x*9.0-vYarn.y*13.0);
+   base*=mix(1.0,groove*(1.0+0.06*fib),detail);
+   specK=0.10*mix(1.0,0.35+0.65*ply,detail);shin=16.0;rimK=0.20;
+  }else if(kind>1.5&&kind<2.5){
+   float g=sin((vYarn.y*5.0+0.32*sin(vYarn.x*1.7)+0.12*sin(vYarn.x*6.1))*6.2832);
+   base*=0.88+0.10*g;specK=0.05;shin=10.0;
+  }else if(kind>2.5){specK=0.6;shin=70.0;}
+  vec3 h=normalize(L+v);float spec=pow(max(0.,dot(n,h)),shin)*specK;
+  float rim=pow(1.0-max(0.,dot(n,v)),3.0);
+  vec3 rgb=base*(amb+0.64*diff*vec3(1.0,0.96,0.88)+0.15*fill*vec3(0.72,0.82,1.0))+vec3(spec)+base*rim*rimK;
+  gl_FragColor=vec4(clamp(rgb,0.,1.),1.0);
+ }`;
+ const program=gl.createProgram();gl.attachShader(program,compileShader(gl.VERTEX_SHADER,vs));gl.attachShader(program,compileShader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);
+ if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+ gpuProgram=program;gpuBuffer=gl.createBuffer();gpuStaticBuffer=gl.createBuffer();gl.useProgram(program);
+ gpuLoc={p:gl.getAttribLocation(program,'aPos'),n:gl.getAttribLocation(program,'aNormal'),c:gl.getAttribLocation(program,'aColor'),y:gl.getAttribLocation(program,'aYarn'),px:gl.getUniformLocation(program,'uPx'),camera:gl.getUniformLocation(program,'uCamera'),right:gl.getUniformLocation(program,'uRight'),up:gl.getUniformLocation(program,'uUp'),f:gl.getUniformLocation(program,'uForward'),viewport:gl.getUniformLocation(program,'uViewport'),projection:gl.getUniformLocation(program,'uProjection')};
+ gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);gl.clearColor(0,0,0,0);
+ gpuReady=true;return true;
+ }catch(e){console.warn('WebGL initialization failed; Canvas fallback is available.',e);gpuReady=false;return false;}}
+initGpu();resize();
+const modeNote=$('renderModeNote');if(modeNote)modeNote.textContent=gpuReady?'｜WebGL立体描画：有効':'｜WebGLが使えないためCanvasの簡易表示中（ブラウザのハードウェアアクセラレーション設定をご確認ください）';
+const vAdd=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],vScale=(a,t)=>[a[0]*t,a[1]*t,a[2]*t];
+const vNormalize=a=>{const l=Math.hypot(...a)||1;return vScale(a,1/l)};
+function shadeRGB(hex,alpha=1){const v=hex.replace('#','');if(v.length!==6)return [.68,.72,.74];return [parseInt(v.slice(0,2),16)/255,parseInt(v.slice(2,4),16)/255,parseInt(v.slice(4,6),16)/255].map(x=>x*alpha+(.185)*(1-alpha));}
+function pushVertex(p,n,c,y){const m=y||[0,0,MAT===1?0:MAT,0];meshVertices.push(p[0],p[1],p[2],n[0],n[1],n[2],c[0],c[1],c[2],m[0],m[1],m[2],m[3]);}
+function pushTri(a,b,c,na,nb,nc,color,ya,yb,yc){pushVertex(a,na,color,ya);pushVertex(b,nb,color,yb);pushVertex(c,nc,color,yc);}
+// Polyline with rounded corners (quadratic fillets) and evenly subdivided straight runs,
+// so tubes bend like tensioned yarn instead of folding at a sharp vertex.
+function roundedPath(pts,radius,seg=8,maxLen=.22){
+ if(pts.length<3)return pts.slice();
+ const out=[pts[0]];
+ const lineTo=q=>{const p=out[out.length-1],d=Math.hypot(...sub(q,p)),n=Math.max(1,Math.ceil(d/maxLen));for(let s=1;s<=n;s++)out.push(vAdd(p,vScale(sub(q,p),s/n)));};
+ for(let i=1;i<pts.length-1;i++){
+  const a=pts[i-1],c=pts[i],b=pts[i+1],ca=sub(a,c),cb=sub(b,c),la=Math.hypot(...ca),lb=Math.hypot(...cb);
+  const r=Math.min(radius,la*.45,lb*.45);
+  if(r<1e-4){lineTo(c);continue;}
+  const p0=vAdd(c,vScale(ca,r/la)),p1=vAdd(c,vScale(cb,r/lb));
+  lineTo(p0);
+  for(let s=1;s<=seg;s++){const t=s/seg,u=1-t;out.push([0,1,2].map(j=>u*u*p0[j]+2*u*t*c[j]+t*t*p1[j]));}
+ }
+ lineTo(pts[pts.length-1]);
+ return out;
+}
+function surfaceTube(points,diameter,col,alpha=1,opts={}){
+ const pts=[];for(const p of points){if(!pts.length||Math.hypot(...sub(p,pts[pts.length-1]))>1e-5)pts.push(p);}
+ if(pts.length<2)return;
+ const color=shadeRGB(col,alpha),radius=Math.max(.006,diameter*.58),sides=opts.sides||18, closed=!!opts.closed;
+ const kind=opts.kind??MAT;
+ const tangent=pts.map((p,i)=>vNormalize(sub(pts[Math.min(pts.length-1,i+1)],pts[Math.max(0,i-1)])));
+ const rings=[];
+ const chooseRef=(t)=>Math.abs(t[1])<.85?[0,1,0]:[1,0,0];
+ let n1=vNormalize(cross(tangent[0],chooseRef(tangent[0]))); if(Math.hypot(...n1)<1e-6) n1=[1,0,0];
+ let n2=vNormalize(cross(tangent[0],n1));
+ const arc=[0];for(let i=1;i<pts.length;i++)arc.push(arc[i-1]+Math.hypot(...sub(pts[i],pts[i-1]))/radius);
+ for(let i=0;i<pts.length;i++){
+   const t=tangent[i];
+   if(i>0){
+     // Parallel-transport the cross-section frame so the tube stays round and untwisted.
+     n1=sub(n1,vScale(t,dot(n1,t)));
+     if(Math.hypot(...n1)<1e-6) n1=vNormalize(cross(t,chooseRef(t)));
+     n1=vNormalize(n1); n2=vNormalize(cross(t,n1));
+   }
+   const ring=[];
+   for(let k=0;k<sides;k++){
+     const th=2*Math.PI*k/sides;
+     const n=vAdd(vScale(n1,Math.cos(th)),vScale(n2,Math.sin(th)));
+     ring.push({p:vAdd(pts[i],vScale(n,radius)),n});
+   }
+   rings.push(ring);
+ }
+ for(let i=1;i<rings.length;i++)for(let k=0;k<sides;k++){
+   const j=(k+1)%sides,a=rings[i-1][k],b=rings[i-1][j],c=rings[i][k],d=rings[i][j];
+   const t0=2*Math.PI*k/sides,t1=2*Math.PI*(k+1)/sides,s0=arc[i-1],s1=arc[i];
+   const ya=[s0,t0,kind,radius],yb=[s0,t1,kind,radius],yc=[s1,t0,kind,radius],yd=[s1,t1,kind,radius];
+   pushTri(a.p,b.p,c.p,a.n,b.n,c.n,color,ya,yb,yc);pushTri(b.p,d.p,c.p,b.n,d.n,c.n,color,yb,yd,yc);
+ }
+ if(!closed && opts.caps!==false){
+   const q=rings.length-1,y0=[0,0,kind,radius],y1=[arc[q],0,kind,radius];
+   for(let k=0;k<sides;k++){
+     const j=(k+1)%sides;
+     pushTri(pts[0],rings[0][j].p,rings[0][k].p,vScale(tangent[0],-1),vScale(tangent[0],-1),vScale(tangent[0],-1),color,y0,y0,y0);
+     pushTri(pts[q],rings[q][k].p,rings[q][j].p,tangent[q],tangent[q],tangent[q],color,y1,y1,y1);
+   }
+ }
+}
+function tube3(points,diameter,col,alpha=1,options={}){if(gpuDraw){surfaceTube(points,diameter,col,alpha,options);}else{for(let i=1;i<points.length;i++)line3(points[i-1],points[i],col,diameter,alpha);}}
+function box3(a,b,diam,col,alpha=1){if(!gpuDraw){solidLine3(a,b,col,diam,alpha);return;}
+ const t=vNormalize(sub(b,a)),guide=Math.abs(t[1])>.88?[1,0,0]:[0,1,0],u=vNormalize(cross(t,guide)),v=vNormalize(cross(t,u));const r=Math.max(.012,diam*.52),rgb=shadeRGB(col,alpha);
+ const corners=[[-1,-1],[1,-1],[1,1],[-1,1]],ring=(p)=>corners.map(([x,y])=>vAdd(p,vAdd(vScale(u,x*r),vScale(v,y*r))));
+ const lo=ring(a),hi=ring(b),K=MAT===1?0:MAT,Lb=Math.hypot(...sub(b,a));
+ for(let k=0;k<4;k++){const j=(k+1)%4,n=vNormalize(vAdd(vScale(u,corners[k][0]+corners[j][0]),vScale(v,corners[k][1]+corners[j][1])));
+  const y00=[0,0,K,r],y01=[0,1,K,r],y10=[Lb,0,K,r],y11=[Lb,1,K,r];
+  pushTri(lo[k],lo[j],hi[k],n,n,n,rgb,y00,y01,y10);pushTri(lo[j],hi[j],hi[k],n,n,n,rgb,y01,y11,y10);}
+ for(let k=1;k<3;k++){pushTri(lo[0],lo[k+1],lo[k],vScale(t,-1),vScale(t,-1),vScale(t,-1),rgb);pushTri(hi[0],hi[k],hi[k+1],t,t,t,rgb);}
+}
+function polygon3(points,col,alpha=1){if(!gpuDraw)return false;if(points.length<3)return true;const c=shadeRGB(col,alpha),n=vNormalize(cross(sub(points[1],points[0]),sub(points[2],points[0])));for(let i=1;i+1<points.length;i++)pushTri(points[0],points[i],points[i+1],n,n,n,c);return true;}
+function sphere3(center,radius,col,alpha=1){if(!gpuDraw)return false;const lat=7,lon=10,c=shadeRGB(col,alpha);for(let i=0;i<lat;i++){const a=Math.PI*i/lat,b=Math.PI*(i+1)/lat;for(let j=0;j<lon;j++){const l=2*Math.PI*j/lon,m=2*Math.PI*(j+1)/lon;const sph=(h,v)=>[Math.sin(h)*Math.cos(v),Math.cos(h),Math.sin(h)*Math.sin(v)];const na=sph(a,l),nb=sph(a,m),nc=sph(b,l),nd=sph(b,m);const A=vAdd(center,vScale(na,radius)),B=vAdd(center,vScale(nb,radius)),C=vAdd(center,vScale(nc,radius)),D=vAdd(center,vScale(nd,radius));pushTri(A,B,C,na,nb,nc,c);pushTri(B,D,C,nb,nd,nc,c);}}return true;}
+function renderGPU(){if(!gpuReady)return;const width=gpuCanvas.width,height=gpuCanvas.height;if(!width||!height)return;gl.viewport(0,0,width,height);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(gpuProgram);
+ gl.uniform3fv(gpuLoc.camera,cbasis.cam);gl.uniform3fv(gpuLoc.right,cbasis.right);gl.uniform3fv(gpuLoc.up,cbasis.up);gl.uniform3fv(gpuLoc.f,cbasis.f);
+ gl.uniform4f(gpuLoc.viewport,size.w,size.h,0,0);gl.uniform3f(gpuLoc.projection,$('projMode').value==='persp'?1:0,cbasis.focal,cbasis.orthoScale);
+ gl.uniform3f(gpuLoc.px,$('projMode').value==='persp'?1:0,cbasis.focal*size.dpr,cbasis.orthoScale*size.dpr);
+ const stride=VSTRIDE*4;
+ const bindAttributes=()=>{for(const [a,ofs,cnt] of [[gpuLoc.p,0,3],[gpuLoc.n,3*4,3],[gpuLoc.c,6*4,3],[gpuLoc.y,9*4,4]]){if(a<0)continue;gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,cnt,gl.FLOAT,false,stride,ofs);}};
+ if(gpuStaticCount){gl.bindBuffer(gl.ARRAY_BUFFER,gpuStaticBuffer);bindAttributes();gl.drawArrays(gl.TRIANGLES,0,gpuStaticCount);}
+ gl.bindBuffer(gl.ARRAY_BUFFER,gpuBuffer);bindAttributes();if(gpuDynamicCount)gl.drawArrays(gl.TRIANGLES,0,gpuDynamicCount);
+}
+
+let lastTime=0,prevHudKey='',lastCameraText='';
+const OPEN=.72,BEAT=.68,RELAX=.22;
+// Two shuttles, one red and one white.  Upright exit is followed by linear lift; no circular path.
+function schedule(p){
+ const g=groups(p);let time=OPEN;const spans=[];
+ for(let k=0;k<g.length;k++){
+   const a=g[k],travel=.58+.086*a.len;
+   const s={run:a,idx:k,start:time};
+   s.approachEnd=time+.55;
+   s.insertEnd=s.approachEnd+.44;
+   s.passEnd=s.insertEnd+travel;
+   s.turnEnd=s.passEnd+.27;
+   s.connectEnd=s.turnEnd+.60;
+   s.parkEnd=s.connectEnd+.65;
+   s.end=s.parkEnd;
+   spans.push(s);time=s.end;
+ }
+ return {spans,beatStart:time,beatEnd:time+BEAT,total:time+BEAT+RELAX};
+}
+function stageAt(p,tm){
+ const sch=schedule(p),time=clamp(tm,0,sch.total);
+ if(time<OPEN)return{phase:'open',amount:ease(time/OPEN),sch,open:ease(time/OPEN),seg:0};
+ for(const s of sch.spans){
+  if(time<s.approachEnd)return{phase:'approach',seg:s.idx,amount:ease((time-s.start)/(s.approachEnd-s.start)),sch,open:1};
+  if(time<s.insertEnd)return{phase:'insert',seg:s.idx,amount:ease((time-s.approachEnd)/(s.insertEnd-s.approachEnd)),sch,open:1};
+  if(time<s.passEnd)return{phase:'carry',seg:s.idx,amount:ease((time-s.insertEnd)/(s.passEnd-s.insertEnd)),sch,open:1};
+  if(time<s.turnEnd)return{phase:'turn',seg:s.idx,amount:ease((time-s.passEnd)/(s.turnEnd-s.passEnd)),sch,open:1};
+  if(time<s.connectEnd)return{phase:'connect',seg:s.idx,amount:ease((time-s.turnEnd)/(s.connectEnd-s.turnEnd)),sch,open:1};
+  if(time<s.parkEnd)return{phase:'park',seg:s.idx,amount:ease((time-s.connectEnd)/(s.parkEnd-s.connectEnd)),sch,open:1};
+ }
+ if(time<sch.beatEnd)return{phase:'beat',amount:ease((time-sch.beatStart)/BEAT),sch,open:1,seg:sch.spans.length-1};
+ return{phase:'close',amount:ease((time-sch.beatEnd)/RELAX),sch,open:1-ease((time-sch.beatEnd)/RELAX),seg:sch.spans.length-1};
+}
+
+function resize(){const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);if(!rect.width||!rect.height)return;size={w:rect.width,h:rect.height,dpr};canvas.width=Math.round(size.w*dpr);canvas.height=Math.round(size.h*dpr);gpuCanvas.width=canvas.width;gpuCanvas.height=canvas.height;ctx.setTransform(dpr,0,0,dpr,0,0);}
+new ResizeObserver(resize).observe(canvas);
+function vec(x=0,y=0,z=0){return[x,y,z]};const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{let n=Math.hypot(...a)||1;return a.map(x=>x/n)};
+let cbasis=null;
+function setCameraBasis(){let c=camera,cam=[c.target[0]+Math.sin(c.az)*Math.cos(c.el)*c.dist,c.target[1]+Math.sin(c.el)*c.dist,c.target[2]+Math.cos(c.az)*Math.cos(c.el)*c.dist];let f=norm(sub(c.target,cam)),right=norm(cross(f,[0,1,0])),up=norm(cross(right,f));cbasis={cam,f,right,up,focal:.5*size.h/Math.tan(.44),orthoScale:Math.min(size.w/7.7,size.h/8.6)*(11.1/c.dist)};}
+function proj(pt){let v=sub(pt,cbasis.cam),dep=dot(v,cbasis.f),rx=dot(v,cbasis.right),uy=dot(v,cbasis.up);if(($('projMode')?.value||'persp')==='ortho')return{x:size.w/2+rx*cbasis.orthoScale,y:size.h/2-uy*cbasis.orthoScale,d:dep,s:cbasis.orthoScale};let scale=cbasis.focal/Math.max(0.2,dep);return {x:size.w/2+rx*scale,y:size.h/2-uy*scale,d:dep,s:scale};}
+let cmds=[];const avgDepth=v=>v.reduce((s,p)=>s+proj(p).d,0)/v.length;
+function line3(a,b,col,r=.012,alpha=1,bias=0){
+ if(gpuDraw){surfaceTube([a,b],r,col,alpha,{sides:7});return;}
+ let A=proj(a),B=proj(b); if(A.d<.15||B.d<.15)return;
+ const screenLen=Math.hypot(B.x-A.x,B.y-A.y);
+ // Painter depth order: the long reed teeth and warp threads must be sliced into
+ // small projected spans. Mid-point sorting of an entire long line is incorrect.
+ const steps=Math.min(95,Math.max(1,Math.ceil(screenLen/17)));
+ for(let i=0;i<steps;i++){
+   const t0=i/steps,t1=(i+1)/steps;
+   const x0=A.x+(B.x-A.x)*t0,y0=A.y+(B.y-A.y)*t0,d0=A.d+(B.d-A.d)*t0,s0=A.s+(B.s-A.s)*t0;
+   const x1=A.x+(B.x-A.x)*t1,y1=A.y+(B.y-A.y)*t1,d1=A.d+(B.d-A.d)*t1,s1=A.s+(B.s-A.s)*t1;
+   const depth=(d0+d1)/2+bias;
+   cmds.push({d:depth,draw(){
+     ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);
+     ctx.lineWidth=clamp((s0+s1)*r,0.7,12);ctx.lineCap='butt';ctx.lineJoin='round';ctx.strokeStyle=col;ctx.stroke();ctx.globalAlpha=1;
+   }});
+ }
+} 
+function solidLine3(a,b,col,r=.012,alpha=1,bias=0){
+ if(gpuDraw){box3(a,b,r,col,alpha);return;}
+ const A=proj(a),B=proj(b);if(A.d<.15||B.d<.15)return;
+ cmds.push({d:(A.d+B.d)/2+bias,draw(){
+   ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);
+   ctx.lineWidth=clamp((A.s+B.s)*r,0.7,12);
+   ctx.lineCap='round';ctx.strokeStyle=col;ctx.stroke();ctx.globalAlpha=1;
+ }});
+}
+function poly3(v,col,alpha=1,border=null,bias=0){if(gpuDraw){polygon3(v,col,alpha);return;}let ps=v.map(proj);if(ps.some(p=>p.d<.2))return;cmds.push({d:ps.reduce((t,p)=>t+p.d,0)/ps.length+bias,draw(){ctx.globalAlpha=alpha;ctx.beginPath();ctx.moveTo(ps[0].x,ps[0].y);ps.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();ctx.fillStyle=col;ctx.fill();if(border){ctx.lineWidth=.5;ctx.strokeStyle=border;ctx.stroke();}ctx.globalAlpha=1;}});}
+function point3(a,col,r=.055,alpha=1,bias=0){if(gpuDraw){sphere3(a,r*.75,col,alpha);return;}const p=proj(a);if(p.d<.2)return;cmds.push({d:p.d+bias,draw(){ctx.globalAlpha=alpha;ctx.beginPath();ctx.arc(p.x,p.y,clamp(p.s*r,1.2,16),0,2*Math.PI);ctx.fillStyle=col;ctx.fill();ctx.globalAlpha=1}});}
+function path3(vertices,col,r=.012,alpha=1){if(gpuDraw){tube3(vertices,r,col,alpha,{sides:18,closed:false});return;}for(let i=1;i<vertices.length;i++)line3(vertices[i-1],vertices[i],col,r,alpha);}
+function beam(x0,x1,y,z,col='#9caa9b',r=.032){line3([x0,y,z],[x1,y,z],col,r);}
+function thread3(a,b,col,r=.012,alpha=1,opt={}){
+ if(gpuDraw){surfaceTube([a,b],r,col,alpha,{sides:10});return;}
+ const top=!!opt.top, shadow=opt.shadow!==false, bias=opt.bias||0;
+ const body=top?tint(col,.08):tint(col,-.20);
+ const hi=top?tint(col,.42):tint(col,.10);
+ if(shadow){
+   line3([a[0]+.004,a[1]-.02,a[2]+.004],[b[0]+.004,b[1]-.02,b[2]+.004], '#000000',r*1.18,alpha*.12,bias+.07);
+ }
+ line3(a,b,body,r,alpha,bias);
+ line3([a[0]-.006,a[1]+r*.58,a[2]-.004],[b[0]-.006,b[1]+r*.58,b[2]-.004],hi,r*.23,Math.min(1,alpha*.70),bias-.01);
+}
+
+const SHAFT_LIFT=.78;
+// Manual offsets from mouse dragging (shafts: Y, reed: Z, shuttle: X). They are added on top of
+// the scheduled animation, and decay back to zero when playback resumes.
+const manual={shaft:[0,0,0,0,0,0],reed:0,shuttle:0};
+const manualActive=()=>manual.reed!==0||manual.shuttle!==0||manual.shaft.some(v=>v!==0);
+function resetManual(){manual.shaft.fill(0);manual.reed=0;manual.shuttle=0;}
+let manualShuttleAt=null;
+// Front/cloth side is positive Z. Number shafts from front to back.
+// For a 4-shaft loom: #1 = -1.77 (nearest), #4 = -3.03 (farthest).
+// The 5-shaft satin comparison uses the same front-to-back convention.
+const heddleZ=shaft=>-3.03+(shaftCount()-shaft)*.42;
+const fellZ=p=>3.42-p*(2.42/totalPicks());
+function heddleData(p,open){const lifts=liftFor(p);return Array.from({length:16},(_,i)=>{let shaft=shaftFor(i),lifted=lifts.includes(shaft),sg=lifted?1:-1;return{index:i,shaft,sg,y:sg*SHAFT_LIFT*open+manual.shaft[shaft]};});}
+function woodRail(a,b,width=.078){
+ // Wooden frame beam. GPU: one prism with procedural grain. Canvas: body + light streak.
+ const m=MAT;MAT=2;
+ if(gpuDraw){box3(a,b,width,'#7a5436',1);MAT=m;return;}
+ solidLine3(a,b,'#795337',width,1,0);
+ solidLine3([a[0],a[1]+.029,a[2]],[b[0],b[1]+.029,b[2]],
+              '#b98a5f',Math.max(.014,width*.25),.77,-.015);
+ MAT=m;
+}
+const SHAFT_COLORS=['#ee85b0','#efa044','#aed75e','#ac8bdf','#9ca3af']; // 1=桃、2=橙、3=黄緑、4=紫、5=仮想・グレー
+function drawWoven(){
+// Woven cloth: continuous warp and weft tubes that share the crimp. At every crossing the
+// warp is lifted by aW and the weft dips by aF in the opposite direction, so the two
+// centrelines are always separated by more than the sum of the two rendered radii.
+// Heights are joined with cosine easing (zero slope at each crossing), giving C1-smooth yarn;
+// consecutive picks/ends in the same state stay level as a float.
+const P=pick;if(P<=0)return;
+const rw=Math.max(.006,warpRadius()*.58),rf=Math.max(.006,weftRadius()*.58);
+const gap=(rw+rf)*1.06+.003,aW=gap*.55,aF=gap*.5,SIDES=12;
+const liftsK=Array.from({length:P},(_,k)=>liftFor(k));
+const sgn=(i,k)=>liftsK[k].includes(shaftFor(i))?1:-1;
+const easeSeg=(out,a,b,steps)=>{
+  if(Math.abs(a[1]-b[1])<1e-7){out.push(b);return;}
+  for(let s=1;s<=steps;s++){const t=s/steps,e=.5-.5*Math.cos(Math.PI*t);out.push([lerp(a[0],b[0],t),lerp(a[1],b[1],e),lerp(a[2],b[2],t)]);}
+};
+for(let k=0;k<P;k++){
+ const z=fellZ(k);
+ for(const run of groups(k)){
+   const col=threadColor(run.red),yAt=i=>WOVEN_Y-sgn(i,k)*aF;
+   const pts=[[xe(run.a)+.006,yAt(run.a),z],[wx(run.a),yAt(run.a),z]];
+   for(let i=run.a;i<run.b;i++)easeSeg(pts,[wx(i),yAt(i),z],[wx(i+1),yAt(i+1),z],8);
+   pts.push([xe(run.b+1)-.006,yAt(run.b),z]);
+   tube3(pts,weftRadius(),col,1,{sides:SIDES,caps:true});
+ }
+}
+for(let i=0;i<16;i++){
+ const x=wx(i),col=warpColor(),h=k=>WOVEN_Y+sgn(i,k)*aW;
+ const pts=[[x,h(0),3.50],[x,h(0),fellZ(0)]];
+ for(let k=0;k<P-1;k++)easeSeg(pts,[x,h(k),fellZ(k)],[x,h(k+1),fellZ(k+1)],6);
+ // Ease back to the cloth plane exactly at the fell, where the shed warp continues.
+ easeSeg(pts,[x,h(P-1),fellZ(P-1)],[x,WOVEN_Y,fellZ(P)],6);
+ tube3(pts,warpRadius(),col,1,{sides:SIDES,caps:true});
+}
+}
+function drawFrame(st){const hd=heddleData(pick,st.open);
+// The four outer wood rails meet at exactly the same Y and Z corners.
+const FRAME_Y=-.35, FRAME_BACK=-3.80, FRAME_FRONT=3.72, FRAME_LEFT=-3.25, FRAME_RIGHT=3.25;
+for(const x of [FRAME_LEFT,FRAME_RIGHT]) woodRail([x,FRAME_Y,FRAME_BACK],[x,FRAME_Y,FRAME_FRONT],.105);
+for(const z of [FRAME_BACK,FRAME_FRONT]) woodRail([FRAME_LEFT,FRAME_Y,z],[FRAME_RIGHT,FRAME_Y,z],.105);
+// No central transverse wooden bars: the moving reed is a separate assembly.
+// Four physically separate heddle frames, each in its own depth plane.
+// Each colored frame carries exactly the four heddles assigned to that shaft.
+if($('frames').checked){
+ const lifts=liftFor(pick);
+ for(let shaft=1;shaft<=shaftCount();shaft++){
+   const z=heddleZ(shaft),raised=lifts.includes(shaft),sg=raised?1:-1;
+   const cy=sg*SHAFT_LIFT*st.open+manual.shaft[shaft];
+   const col=SHAFT_COLORS[(shaft-1)%SHAFT_COLORS.length];
+   const yHi=cy+.49,yLo=cy-.49,xL=-3.06,xR=3.06;
+   // Visible rigid rectangular frame. Top/bottom and both vertical uprights move together.
+   const stroke=(a,b,r=.036)=>gpuDraw?box3(a,b,r*1.15,col,.99):line3(a,b,col,r,.99,-.012);
+   stroke([xL,yHi,z],[xR,yHi,z],.049);
+   stroke([xL,yLo,z],[xR,yLo,z],.045);
+   stroke([xL,yLo,z],[xL,yHi,z],.050);
+   stroke([xR,yLo,z],[xR,yHi,z],.050);
+   // Slim reflective line along the top beam makes the frames easier to distinguish.
+   if(!gpuDraw)line3([xL,yHi+.018,z-.018],[xR,yHi+.018,z-.018],tint(col,.42),.012,.86,-.018);
+   // Four metal wire heddles with a visible eye that holds each warp.
+   for(let i=0;i<16;i++){if(shaftFor(i)!==shaft)continue;
+     const x=wx(i),yEye=hd[i].y;
+     const metal='#d7e0e5';
+     MAT=3;
+     line3([x,cy+.44,z],[x,yEye+.089,z],metal,.014,.94);
+     line3([x,yEye-.089,z],[x,cy-.44,z],metal,.014,.94);
+     const ring=[];
+     for(let a=0;a<=32;a++){
+       const th=a*Math.PI*2/32;
+       ring.push([x+.052*Math.cos(th),yEye+.092*Math.sin(th),z]);
+     }
+     path3(ring,tint(col,.60),.011,1);
+     MAT=1;
+   }
+ }
+}
+// Straight tensioned warp: cloth fell -> the center of its heddle eye -> rear anchor.
+// No Bezier or sampled curves. Different shafts have their own exact eye Z/Y.
+const fell=fellZ(pick);
+for(let i=0;i<16;i++){
+ const x=wx(i),eye=[x,hd[i].y,heddleZ(hd[i].shaft)];
+ const fellPoint=[x,WOVEN_Y,fell];
+ const rear=[x,0,-3.61];
+ // Start a hair inside the cloth so the shed warp overlaps the woven warp, then bend
+ // smoothly at the fell and through the heddle eye instead of folding at a vertex.
+ const lead=[x,WOVEN_Y,fell+.3*2.42/totalPicks()];
+ if(gpuDraw)tube3(roundedPath([lead,fellPoint,eye,rear],.17,10,.2),warpRadius(),warpColor(),.98,{sides:16,caps:true});
+ else {thread3(fellPoint,eye,warpColor(),warpRadius(),.98,{top:hd[i].y>0,bias:hd[i].y>0?-.04:.05,shadow:true});
+ thread3(eye,rear,warpColor(),warpRadius(),.98,{top:hd[i].y>0,bias:hd[i].y>0?-.04:.05,shadow:true});}
+}
+
+// The opening is defined entirely by the 16 real warp lines.
+
+
+}
+
+// Reed (osa): a moving wooden rectangular comb, not a single horizontal rod.
+// 17 slim teeth form 16 gaps through which individual warp threads pass.
+function reedPosition(st){return clamp(reedBase(st)+manual.reed,REED_MIN,fellZ(pick)-.13);}
+const REED_MIN=-1.5;
+function reedBase(st){
+ const rest=-.93;
+ const fell=fellZ(pick);
+ const contact=fell-.13;
+ if(st.phase==='beat') return lerp(rest,contact,ease(st.amount));
+ if(st.phase==='close') return lerp(contact,rest,ease(st.amount));
+ return rest;
+}
+function drawReed(st){
+ const z=reedPosition(st), upper=1.24, lower=-1.24;
+ const brown='#98673d',light='#bd9061';
+ MAT=2;
+ // Side stiles and upper/lower wood bars of the beater frame.
+ woodRail([-3.03,upper,z],[3.03,upper,z],.092);
+ woodRail([-3.03,lower,z],[3.03,lower,z],.10);
+ woodRail([-3.03,lower,z],[-3.03,upper,z],.070);
+ woodRail([3.03,lower,z],[3.03,upper,z],.070);
+ // Dents lie between the warp ends rather than on top of them.
+ for(let i=0;i<=16;i++){
+   const x=xe(i);
+   thread3([x,lower+.08,z],[x,upper-.075,z],brown,.016,1,{top:true,bias:0,shadow:false});
+   line3([x-.008,lower+.075,z+.013],[x-.008,upper-.07,z+.013],light,.005,.75,0);
+ }
+ // Rails to side guide brackets move together with the reed; depth-sorted normally.
+ for(const x of [-3.10,3.10]){
+  thread3([x,-.60,z],[x,-.60,z-.20],'#775331',.029,1,{top:true,bias:0,shadow:false});
+ }
+ MAT=1;
+}
+
+function spanLoc(run){
+ let x0=xe(run.a)+.055,x1=xe(run.b+1)-.055;
+ let dir=odd(pick)?1:-1;
+ return {from:dir===1?x0:x1,to:dir===1?x1:x0,dir};
+}
+function toolKind(run){return 'shuttle';}
+function yarnColor(run){return threadColor(run.red);}
+function parkPos(run){return run.red?{x:-2.55,y:1.55,z:.42}:{x:2.55,y:1.55,z:.42};}
+function shuttleBody(sh){
+ if(!sh)return;
+ const {x,y,z,run}=sh,alpha=sh.alpha??1;
+ const col=yarnColor(run),theta=sh.angle??(sh.orient==='vertical'?Math.PI/2:0);
+ const ct=Math.cos(theta),st=Math.sin(theta), L=.55;
+ const at=(u,v,w)=>[x+u*ct-v*st,y+u*st+v*ct,z+w];
+ MAT=2;
+ poly3([at(-L/2,0,0),at(-.18,.045,-.10),at(.18,.045,-.10),at(L/2,0,0)],'#ccab7e',alpha,null,-.14);
+ poly3([at(-L/2,0,0),at(-.18,.045,.10),at(.18,.045,.10),at(L/2,0,0)],'#e9cca2',alpha,null,-.15);
+ line3(at(-.17,.052,0),at(.17,.052,0),'#84673b',.03,alpha,-.16);
+ MAT=1;
+ for(let k=-3;k<=3;k++){const xx=k*.044;thread3(at(xx,.02,-.058),at(xx+.018,.085,.060),col,.022,alpha,{top:true,bias:-.16,shadow:false});}
+ MAT=2;
+ point3(at(-L/2,0,0),'#9c7950',.019,alpha,-.16);point3(at(L/2,0,0),'#9c7950',.019,alpha,-.16);
+ MAT=1;
+}
+
+
+function drawActiveWeft(st){
+ const segments=st.sch.spans;
+ const beat=st.phase==='beat'?st.amount:st.phase==='close'?1:0;
+ const zw=lerp(-.55,fellZ(pick),beat);
+ let active=null;
+ // The already inserted portions remain visible as straight weft strands.
+ for(const s of segments){
+   const loc=spanLoc(s.run), done=st.phase==='beat'||st.phase==='close'||s.idx<st.seg;
+   const current=s.idx===st.seg && !['open','beat','close'].includes(st.phase);
+   const fraction=done||current&&!['approach','insert'].includes(st.phase)?
+      (current && st.phase==='carry'?st.amount:1):0;
+   if(fraction>0){
+     const end=lerp(loc.from,loc.to,fraction);
+     const y0=-.025; const runCol=threadColor(s.run.red);
+     // With GPU depth testing, one continuous cylindrical strand is sufficient.
+     if(gpuDraw){tube3([[loc.from,y0,zw],[end,y0,zw]],weftRadius(),runCol,1,{sides:18,caps:false});}
+     else for(let i=s.run.a;i<=s.run.b;i++){
+       let cx0=xe(i)+.002,cx1=xe(i+1)-.002; const lo=Math.min(loc.from,end),hi=Math.max(loc.from,end); if(cx1<lo||cx0>hi) continue;
+       const sx=Math.max(cx0,lo), ex=Math.min(cx1,hi), warpOver=liftFor(pick).includes(shaftFor(i));
+       thread3([sx,y0,zw],[ex,y0,zw],runCol,weftRadius(),1,{top:!warpOver,bias:warpOver?.025:-.015,shadow:true});
+     }
+   }
+   if(!current)continue;
+   const home=parkPos(s.run),a=st.amount;
+   let x=home.x,y=home.y,z=home.z,theta=0;
+   switch(st.phase){
+     case 'approach':
+       // Position above the desired slot, then stop; no early descent.
+       x=lerp(home.x,loc.from,a); z=lerp(home.z,-.55,a); break;
+     case 'insert':
+       x=loc.from;z=-.55;y=lerp(home.y,0,a);theta=Math.PI/2;break;
+     case 'carry':
+       x=lerp(loc.from,loc.to,a);y=0;z=-.55;theta=0;break;
+     case 'turn':
+       // Stay at the very end of the straight run; rotate upright, no swirl.
+       x=loc.to;y=0;z=-.55;theta=Math.PI/2*ease(a);break;
+     case 'connect':
+       // Vertical lift at the exact exit X/Z.  The weft rises vertically.
+       x=loc.to;y=lerp(0,home.y,a);z=-.55;theta=Math.PI/2;break;
+     case 'park':
+       x=loc.to;y=home.y;z=-.55;
+       if(a<.32){theta=Math.PI/2*(1-ease(a/.32));}
+       else{theta=0;const t=ease((a-.32)/.68);x=lerp(loc.to,home.x,t);z=lerp(-.55,home.z,t);}
+       break;
+   }
+   x=clamp(x+manual.shuttle,-3.0,3.0);
+   active={x,y,z,run:s.run,orient:theta>.8?'vertical':'horizontal',angle:theta,alpha:1};
+   // Red/white yarn is vertical only while it is brought down or lifted up.
+   // It disappears once the carrier has rotated to horizontal above the shed.
+   const col=threadColor(s.run.red);
+   if(st.phase==='insert'){
+      thread3([x,home.y,z],[x,y,z],col,weftRadius()*.53,.97,{top:true,bias:.08,shadow:true});
+   }else if(st.phase==='connect'){
+      thread3([loc.to,0,-.55],[x,y,-.55],col,.017,.97,{top:true,bias:.08,shadow:true});
+   }else if(st.phase==='park'&&a<.32){
+      // Retain the raised vertical yarn during the upper turning motion only.
+      thread3([loc.to,0,-.55],[loc.to,home.y,-.55],col,weftRadius()*.53,.97,{top:true,bias:.08,shadow:true});
+   }
+ }
+ // When no shuttle is in motion, the shuttle of the current colour run can be dragged at rest.
+ const curRun=(segments[st.seg]||segments[0])?.run;
+ let idle=null;
+ if(!active&&curRun){const h=parkPos(curRun);idle={x:clamp(h.x+manual.shuttle,-3.0,3.0),y:h.y,z:h.z,run:curRun,angle:0,alpha:1};}
+ manualShuttleAt=active?{x:active.x,y:active.y,z:active.z}:idle?{x:idle.x,y:idle.y,z:idle.z}:null;
+ if($('parked').checked){
+   for(const run of [{red:true,name:'赤'},{red:false,name:'白'}]){
+     if(active&&active.run.red===run.red)continue;
+     if(idle&&idle.run.red===run.red)continue;
+     const h=parkPos(run);shuttleBody({x:h.x,y:h.y,z:h.z,run,angle:0,alpha:.9});
+   }
+ }
+ if(idle)shuttleBody(idle);
+ if(active)shuttleBody(active);
+ return active;
+}
+
+function upperInfo(shuttle,stage){
+ if(!shuttle)return;
+ const p=proj([shuttle.x,shuttle.y+.21,shuttle.z]);
+ if(!(p.d>0&&p.x>20&&p.x<size.w-20&&p.y>24&&p.y<size.h-18))return;
+ const label=(shuttle.run.red?'赤':'白')+'の小杼';
+ ctx.font="500 12px 'Noto Sans JP','Hiragino Sans',sans-serif";let w=ctx.measureText(label).width+30;
+ let x=clamp(p.x-w/2,8,size.w-w-8),y=p.y-36;
+ ctx.fillStyle='rgba(255,255,255,.96)';ctx.strokeStyle='rgba(0,0,0,0)';ctx.lineWidth=1;
+ ctx.beginPath();ctx.roundRect(x+.5,y+.5,w,26,6);ctx.fill();ctx.stroke();
+ ctx.fillStyle=shuttle.run.red?'#d0482e':'#33586f';ctx.beginPath();ctx.arc(x+13,y+13.5,4,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#2f3a3d';ctx.textAlign='left';ctx.fillText(label,x+22,y+18);
+}
+
+function drawText3(p,txt,col='#66806e',font=11){const pp=proj(p);if(pp.d<0)return;ctx.textAlign='center';ctx.font=`500 ${font}px 'Noto Sans JP','Hiragino Sans',sans-serif`;ctx.lineWidth=3;ctx.strokeStyle='rgba(33,43,52,.85)';ctx.strokeText(txt,pp.x,pp.y);ctx.fillStyle=col;ctx.fillText(txt,pp.x,pp.y);ctx.textAlign='left';}
+function drawShaftLabels(st){
+ if(!$('frames').checked || !$('shaftLabels').checked)return;
+ const lifted=liftFor(pick), tags=[];
+ for(let shaft=1;shaft<=shaftCount();shaft++){
+   const base=(lifted.includes(shaft)?1:-1)*SHAFT_LIFT*st.open, center=base+manual.shaft[shaft];
+   const active=manual.shaft[shaft]!==0?center>0:lifted.includes(shaft);
+   const p=proj([-3.065,center+.49,heddleZ(shaft)]);
+   if(p.d<=.2 || p.x < -20 || p.x > size.w+20 || p.y< -15 || p.y>size.h+15)continue;
+   tags.push({shaft,active,col:SHAFT_COLORS[(shaft-1)%SHAFT_COLORS.length],p});
+ }
+ // Place numbered badges beside their *actual* shaft beam; prevent label overlap.
+ const arranged=tags.slice().sort((a,b)=>a.p.y-b.p.y);
+ let prev=-1e5;
+ for(const tag of arranged){
+   tag.y=Math.max(tag.p.y,prev+27);prev=tag.y;
+ }
+ if(arranged.length){
+   const shift=Math.max(0,arranged[arranged.length-1].y-(size.h-55));
+   arranged.forEach(t=>t.y-=shift);
+ }
+ ctx.save();ctx.textAlign='left';ctx.font="500 12px 'Noto Sans JP','Hiragino Sans',sans-serif";
+ for(const t of arranged){
+   const w=114,h=23;
+   const x=Math.max(5,Math.min(size.w-w-5,t.p.x-w-15));
+   const y=Math.max(28,Math.min(size.h-h-24,t.y-h/2));
+   ctx.beginPath();ctx.moveTo(t.p.x,t.p.y);ctx.lineTo(x+w-2,y+h/2);
+   ctx.strokeStyle=t.col;ctx.lineWidth=1.8;ctx.globalAlpha=.86;ctx.stroke();ctx.globalAlpha=1;
+   ctx.beginPath();ctx.roundRect(x+.5,y+.5,w,h,5);
+   ctx.fillStyle='rgba(24,30,35,.82)';ctx.fill();
+   if(t.active){ctx.strokeStyle=t.col;ctx.lineWidth=2;ctx.stroke();}
+   ctx.fillStyle=t.col;ctx.beginPath();ctx.arc(x+10,y+h/2,3.5,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#f5f8fa';ctx.fillText('綜絖'+t.shaft+'  '+(t.active?'↑ 上':'↓ 下'),x+20,y+16);
+ }
+ ctx.restore();
+}
+let lastShaftLegendKey='';
+function updateShaftLegend(){
+ const el=$('shaftLegend'),rows=$('shaftLegendRows');
+ if(!el || !rows)return;
+ const on=$('frames').checked;
+ el.hidden=true;
+ const key=`${mode}:${pick}:${shaftCount()}:${on}`;
+ if(lastShaftLegendKey===key)return;
+ lastShaftLegendKey=key;
+ if(!on)return;
+ const lifts=liftFor(pick);
+ let html='';
+ for(let n=1;n<=shaftCount();n++){
+   const up=lifts.includes(n),col=SHAFT_COLORS[(n-1)%SHAFT_COLORS.length],colorName=['桃','橙','黄緑','紫','灰'][n-1];
+   html+=`<div class="shaft-row ${up?'up':'down'}" style="--shaft-color:${col}"><span><i style="background:${col}"></i>綜絖 ${n} <small class="shaft-color-name">${colorName}</small>${n===5?'（仮想）':''}</span><span class="lift">${up?'↑ 上':'↓ 下'}</span></div>`;
+ }
+ rows.innerHTML=html;
+}
+function updateStaticMesh(){
+ if(!gpuReady)return;
+ const key=[mode,pick,picksPerBit,PIX.map(r=>r.join('')).join(''),warpColor(),colorA(),colorB(),warpDiameter(),weftDiameter()].join('|');
+ if(key===gpuStaticKey)return;
+ gpuStaticKey=key;meshVertices=[];gpuDraw=true;drawWoven();gpuDraw=false;
+ const data=new Float32Array(meshVertices);gpuStaticCount=data.length/VSTRIDE;
+ gl.bindBuffer(gl.ARRAY_BUFFER,gpuStaticBuffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+ meshVertices=[];
+}
+function updateDynamicMesh(st){
+ const key=[mode,pick,st.phase,st.amount.toFixed(4),st.open.toFixed(4),
+ warpColor(),colorA(),colorB(),warpDiameter(),weftDiameter(),
+ $('frames').checked,$('parked').checked,shaftCount(),manual.shaft.join(','),manual.reed.toFixed(4),manual.shuttle.toFixed(4)].join('|');
+ if(key===gpuDynamicKey)return gpuCachedActive;
+ gpuDynamicKey=key;meshVertices=[];gpuDraw=true;
+ drawFrame(st);drawReed(st);gpuCachedActive=drawActiveWeft(st);
+ gpuDraw=false;
+ const data=new Float32Array(meshVertices);gpuDynamicCount=data.length/VSTRIDE;
+ gl.bindBuffer(gl.ARRAY_BUFFER,gpuBuffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
+ meshVertices=[];
+ return gpuCachedActive;
+}
+function draw(st){setCameraBasis();ctx.clearRect(0,0,size.w,size.h);
+ let active;
+ if(gpuReady){updateStaticMesh();active=updateDynamicMesh(st);renderGPU();}
+ else{ctx.fillStyle='#3a4853';ctx.fillRect(0,0,size.w,size.h);cmds=[];gpuDraw=false;drawWoven();drawFrame(st);drawReed(st);active=drawActiveWeft(st);cmds.sort((a,b)=>b.d-a.d);for(const c of cmds)c.draw();}
+if($('warp').checked){for(let i=0;i<16;i++){drawText3([wx(i),.03,3.82],String(i+1),'#f1e9d8',10)}}
+
+upperInfo(active,st);
+drawShaftLabels(st);
+}
+function goPick(p,play=false){resetManual();pick=clamp(p,0,totalPicks()-1);elapsed=0;isPlaying=play;updateHud(true);}
+function setPreset(v){if(v==='underside')camera={az:.35,el:-.72,dist:11.1,target:[0,0,0]};
+else if(v==='front')camera={az:0,el:-.22,dist:10.6,target:[0,0,0]};
+else if(v==='top')camera={az:.003,el:1.48,dist:10.1,target:[0,0,.15]};
+else if(v==='side')camera={az:1.49,el:-.16,dist:10.9,target:[0,0,-.45]};
+else if(v==='shed')camera={az:.66,el:-.34,dist:7.2,target:[0,0,-.85]};
+else if(v==='fabric')camera={az:.14,el:-.52,dist:5.7,target:[0,-.02,3.0]};
+else if(v==='heddles')camera={az:1.02,el:.27,dist:4.8,target:[.0,0,-2.43]};
+else if(v==='angled')camera={az:.62,el:.46,dist:11.8,target:[0,0,0]};
+else if(v==='backside')camera={az:.35,el:.72,dist:11.1,target:[0,0,0]};
+else camera={az:.35,el:-.72,dist:11.1,target:[0,0,0]};}
+function nextSegment(){
+ const sch=schedule(pick);
+ if(elapsed<OPEN){elapsed=sch.spans[0].start+.01;isPlaying=false;return;}
+ for(let i=0;i<sch.spans.length;i++){
+   if(elapsed<sch.spans[i].end-.01){
+     elapsed=i+1<sch.spans.length?sch.spans[i+1].start+.01:sch.beatStart+.01;
+     isPlaying=false;return;
+   }
+ }
+ if(pick<totalPicks()-1)goPick(pick+1,false);
+}
+function nextMotion(){
+ const sch=schedule(pick),bounds=[OPEN];
+ for(const s of sch.spans)bounds.push(s.start,s.approachEnd,s.insertEnd,s.passEnd,s.turnEnd,s.connectEnd,s.parkEnd);
+ bounds.push(sch.beatEnd,sch.total);
+ for(const t of bounds){if(t>elapsed+.045){elapsed=t+.008;isPlaying=false;return;}}
+ if(pick<totalPicks()-1)goPick(pick+1,false);
+}
+
+function createPattern(){
+ const grid=$('pattern'); grid.classList.toggle('weave-draft',mode!=='tapestry');
+ $('patternHeading').textContent=mode==='tapestry'?'図柄（16×16）':'組織図（16×16）';$('patternHint').innerHTML=mode==='tapestry'?'マスをクリック・ドラッグでA／Bを反転':'<span class="lg"><i class="lg-up"></i>経糸が上</span><span class="lg"><i class="lg-down"></i>緯糸が上（経糸が下）</span>';$('patGutter').innerHTML=Array.from({length:16},(_,r)=>`<span data-row="${r}"></span>`).join('');$('patTools').hidden=mode!=='tapestry';$('patLegend').hidden=mode!=='tapestry';grid.classList.toggle('editable',mode==='tapestry');
+ let html='';
+ for(let r=0;r<16;r++)for(let x=0;x<16;x++){
+   if(mode==='tapestry')html+=`<div class="pixel ${PIX[r][x]===0?'red':'white'}" data-row="${r}" data-x="${x}" style="background:${PIX[r][x]===0?colorA():colorB()}"></div>`;
+   else{let p=(15-r),up=liftFor(p).includes(shaftFor(x));html+=`<div class="pixel ${up?'up':'down'}" data-row="${r}" title="経糸${x+1}・組織${p+1}投目 / ${up?'経糸が上':'緯糸が上'}"></div>`;}
+ }
+ grid.innerHTML=html;
+ $('threadingDescription').textContent=mode==='satin5'?'仮想5枚綜絖（実機では織れません）':mode==='herringbone'?'経糸1〜8は1→4の順、9〜16は向きを反転（1→4→3→2）。':'';
+ $('threadingList').innerHTML=(()=>{const n=shaftCount();let lab='',cells='';
+  for(let sh=n;sh>=1;sh--){const col=SHAFT_COLORS[(sh-1)%SHAFT_COLORS.length];lab+=`<span><i style="background:${col}"></i>綜絖${sh}</span>`;
+   for(let j=0;j<16;j++){const on=shaftFor(j)===sh;cells+=`<i class="${on?'on':''}" style="${on?`--c:${col}`:''}" title="${on?`経糸${j+1} → 綜絖${sh}`:''}">${on?sh:''}</i>`;}}
+  const nums='<div class="warp-nums">'+Array.from({length:16},(_,j)=>`<span>${j+1}</span>`).join('')+'</div>';
+  return `<div class="c16"><div class="c16-g th-labs" style="grid-template-rows:repeat(${n},1fr)">${lab}</div><div class="grid16 th-cells" style="grid-template-rows:repeat(${n},minmax(0,1fr))">${cells}</div></div><div class="c16"><span class="c16-g">経糸</span>${nums}</div>`;})();
+ const details={
+  tapestry:['綴織','平織の開口で、色の区間ごとに緯糸を入れます。'],
+  plain:['平織（1/1）','経糸と緯糸が1本ずつ交差します。'],
+  twill:['綾織（2/2）','交差が1本ずつずれて斜めの線になります。'],
+  hota:['保多織','平織3投＋4投目で緯糸を浮かせます。'],
+  satinlike:['4枚朱子風','1枚ずつ上げ、長い緯糸の浮きを作ります。'],
+  oxford:['オックスフォード','経糸2本を1組として平織にします（2本引きそろえ）。'],
+  twill13:['ツイル（1/3）','綜絖を1枚ずつ順に上げ、細い斜めの線が出ます。'],
+  herringbone:['ヘリンボーン','綾織の向きを中央で反転させ、杉の葉の山形にします。'],
+  satin5:['五枚朱子（比較用）','5枚綜絖が必要な理論上の組織です。']
+ };
+ $('weavePrinciple').innerHTML=`<b>${details[mode][0]}</b>　${details[mode][1]}`;
+ $('modeNotice').textContent=mode==='satin5'?'五枚朱子は仮想の5枚綜絖で表示しています（4枚の実機では織れません）。':mode==='satinlike'?'正式な朱子織ではなく、4枚で作る朱子風の組織です。':'';
+ $('modeNotice').classList.toggle('warning',mode==='satin5'||mode==='satinlike');
+ $('weavingTip').hidden=true;$('weavingTip').textContent=mode==='tapestry'?'綴織：色区間ごとに小杼を使う模式表示です。経糸16本も織り上がりの中で連続し、各投で上下に交差します。緯糸A・Bの色を変えられます。':'通常織り：経糸16本が緯糸を交互に上・下から包みます。右の↑↓表示は現在の投の開口で、織り上がりの中では各投の上がる綜絖に従って糸が上下します。';
+ $('weftChoice').disabled=mode==='tapestry';
+ // Warp yarn can be recolored in every weave mode, including tapestry.
+ $('methodNote').textContent=mode==='satin5'?'仮想的に5枚目の綜絖を表示した比較用の組織です。実際に織るには綜絖の追加が必要です。':mode==='hota'?'保多織は4回に1回の緯糸浮きが特徴です。表示は構造の学習用モデルであり、工房固有のタイアップの忠実な再現を保証しません。':'丸い糸は円筒チューブメッシュ、木枠・綜絖・筬は角柱の立体モデルです。張力などの厳密な物理演算はしません。立体表示は学習用の模式アニメーションです。糸同士の摩擦・張力、綴織の境界での結合までを物理計算しているわけではありません。';
+ $('totalPicks').textContent=totalPicks();
+ $('pickRange').max=totalPicks();
+ $('pedalBoxes').style.gridTemplateColumns=`repeat(${shaftCount()},1fr)`;
+ $('pedalSequence').innerHTML=Array.from({length:mode==='satin5'?5:mode==='tapestry'||mode==='plain'||mode==='oxford'?2:4},(_,i)=>`<span class="seq-item" data-beat="${i}">${i+1}投：${liftFor(i).join('＋')}</span>`).join('');
+}
+function updatePattern(){const r=mode==='tapestry'?rowOf(pick):(15-pick%16);for(const el of $('pattern').children)el.classList.toggle('focus',Number(el.dataset.row)===r);for(const el of $('patGutter').children)el.classList.toggle('on',Number(el.dataset.row)===r);}
+function updateHud(force=false){updateShaftLegend();
+ const st=stageAt(pick,elapsed),r=rowOf(pick),g=groups(pick),s=st.seg===undefined?0:st.seg,current=g[Math.min(s,g.length-1)];
+ const key=`${mode}_${picksPerBit}_${pick}_${st.phase}_${s}`;
+ if(!force&&key===prevHudKey){$('subProgress').value=Math.floor(100*elapsed/st.sch.total);return;}prevHudKey=key;
+ const lifts=liftFor(pick);
+ $('crossingCells').innerHTML=(()=>{const W=640,H=112,x=i=>20+40*i,up=i=>lifts.includes(shaftFor(i)),yU=34,yD=62,wU=54,wD=42;
+  let d=`M0 48`;for(let i=0;i<16;i++){const y=up(i)?wU+8:wD-8;const x0=i?x(i-1):0,y0=i?(up(i-1)?wU+8:wD-8):48;d+=` C${x0+20} ${y0} ${x(i)-20} ${y} ${x(i)} ${y}`;}d+=` C${x(15)+10} ${up(15)?wU+8:wD-8} ${W-10} 48 ${W} 48`;
+  let c='';for(let i=0;i<16;i++){const sh=shaftFor(i),col=SHAFT_COLORS[(sh-1)%SHAFT_COLORS.length],u=up(i);
+   c+=`<circle cx="${x(i)}" cy="${u?yU:yD}" r="12" fill="${u?col:'#fff'}" stroke="${tint(col,-.35)}" stroke-width="2.2"><title>経糸${i+1}（綜絖${sh}）：${u?'上':'下'}</title></circle>`;}
+  const guides=Array.from({length:17},(_,k)=>`<line x1="${40*k}" y1="10" x2="${40*k}" y2="${H-10}" stroke="#e1e3e2" stroke-width="1.5"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="この投の経糸と緯糸の断面">${guides}<path d="${d}" fill="none" stroke="${colorA()}" stroke-width="7" stroke-linecap="round" opacity=".85"/>${c}</svg>`;})();
+ $('pickNumber').textContent=pick+1; $('pickRange').value=pick+1;
+ $('subProgress').value=100*elapsed/st.sch.total;
+ $('subCount').textContent=`${mode==='tapestry'?`図案の下から${16-r}段目・${pick%picksPerBit+1}/${picksPerBit}投`:`組織${pick+1}投目` } ｜ ${g.length}色区間`;
+ $('summary').textContent=`綜絖 ${lifts.join('＋')}｜${odd(pick)?'左→右':'右→左'}`;
+ $('pedalBoxes').innerHTML=Array.from({length:shaftCount()},(_,idx)=>{
+   const v=idx+1, pressed=lifts.includes(v), col=SHAFT_COLORS[idx%SHAFT_COLORS.length];
+   const pressedColors=['#b23a6b','#bf6a1c','#5e8a24','#7a52b3','#545b66'];
+   return `<div class="pedal ${pressed?'active':''}" role="img" aria-label="ペダル${v}：${pressed?'踏んでいる':'踏んでいない'}" style="--shaft-color:${col};--shaft-pale:${tint(col,.8)};--shaft-dark:${tint(col,-.5)};--shaft-pressed:${pressedColors[idx]||'#545b66'}"><strong>${v}</strong><small>${pressed?'踏む':''}</small></div>`;
+ }).join('');
+ $('bands').innerHTML=(()=>{const runs=g.slice().sort((a,b)=>a.a-b.a);let h='';for(const run of runs){const c=threadColor(run.red),rgb=[1,3,5].map(k=>parseInt(c.slice(k,k+2),16)),lum=(rgb[0]*.299+rgb[1]*.587+rgb[2]*.114),mid=Math.floor((run.a+run.b)/2);
+   for(let i=run.a;i<=run.b;i++)h+=`<div class="band" style="background:${c};color:${lum>144?'#111':'#fff'}" title="${run.name} 経糸${fmt(run.a,run.b)}">${i===mid?(run.red?'A':'B'):''}</div>`;}return h;})();
+ $('legendA').style.background=colorA(); $('legendB').style.background=colorB();
+ $('seq').hidden=true;$('seq').textContent='通す順：'+g.map(v=>`${v.name} ${fmt(v.a,v.b)}番`).join(' → ');
+ const stm={open:'① 綜絖が上下し開口する',approach:'② 上側で小杼を水平移動する',insert:'③ 小杼を垂直に下ろす',carry:'④ 緯糸を通す',turn:'⑤ 端で小杼を縦にする',connect:'⑥ 糸を垂直に伸ばして上昇',park:'⑦ 上で横向きにして待機',beat:'⑧ 木製の筬で緯糸を打ち込む',close:'開口を戻し次の投へ'};
+ const explains={open:'ペダルを踏むと綜絖が上がり、経糸が上下に分かれます。',approach:'小杼を上側で横向きのまま運びます。',insert:'小杼を縦にして開口へ下ろします。',carry:'小杼が経糸の間を通り、緯糸が入ります。',turn:'端で止まり、小杼を縦にします。',connect:'小杼をまっすぐ引き上げます。',park:'上で横向きに戻して待機します。',beat:'筬で緯糸を手前へ打ち込みます。',close:'開口を戻して次の投へ。'};
+ $('stageTitle').textContent=stm[st.phase];
+ $('stageSub').textContent=`第${pick+1}投・${g.length}区間の${s+1}番目 ｜ ${current.name} 経糸${fmt(current.a,current.b)}番`;
+ $('movementHelp').textContent=explains[st.phase];
+ $('movementText').hidden=true;$('movementText').textContent=`使用中：${current.name}の小杼｜経糸${fmt(current.a,current.b)}番`;
+ const phaseNames=['open','approach','insert','carry','turn','connect','park','beat'];
+ Array.from($('phaseGuide').children).forEach((el,i)=>el.classList.toggle('on',phaseNames[i]===st.phase));
+ $('detail').innerHTML=`<b>第${pick+1}投</b> / ${mode==='tapestry'?`図案下から${16-r}段目の${pick%picksPerBit+1}/${picksPerBit}投`:`${mode==='hota'&&pick%4===3?'保多織の浮き投':'組織の開口'}`}<br>小杼：<b>${current.name}・経糸${fmt(current.a,current.b)}番</b><br>踏むペダル：<b>${lifts.join('＋')}</b>`;
+ $('caution').textContent=mode==='satin5'?'仮想5枚綜絖の比較表示です。':mode==='hota'&&pick%4===3?'浮き投：綜絖1だけを上げます。':'';
+ for(const el of $('pedalSequence').children)el.classList.toggle('current',Number(el.dataset.beat)===pick%$('pedalSequence').children.length);
+ updatePattern();addWeavingFurigana(document.body);
+}
+function frame(time){if(!lastTime)lastTime=time;let delta=clamp((time-lastTime)/1000,0,.08);lastTime=time;
+if(isPlaying&&manualActive()){const k=1-Math.exp(-delta*7),dec=v=>{const n=v-v*k-Math.sign(v)*delta*.15;return Math.abs(n)<.004||Math.sign(n)!==Math.sign(v)?0:n;};manual.shaft=manual.shaft.map(dec);manual.reed=dec(manual.reed);manual.shuttle=dec(manual.shuttle);}
+else if(isPlaying){elapsed+=delta*speed;let sch=schedule(pick);if(elapsed>=sch.total){if(pick===totalPicks()-1){elapsed=sch.total;isPlaying=false;}else{elapsed-=sch.total;pick++;}}}
+let st=stageAt(pick,elapsed);draw(st);updateHud();$('play').textContent=isPlaying?'⏸ 一時停止':'▶ 再生';requestAnimationFrame(frame);}
+createPattern();updateHud(true);requestAnimationFrame(frame);
+$('play').onclick=()=>{if(pick===totalPicks()-1&&elapsed>=schedule(pick).total){pick=0;elapsed=0;}isPlaying=!isPlaying;};
+$('next').onclick=()=>goPick(pick+1,false);$('prev').onclick=()=>goPick(pick-1,false);
+$('restart').onclick=()=>goPick(0,true);
+$('segment').onclick=nextSegment;$('motion').onclick=nextMotion;
+const sliderToSpeed=v=>0.05*Math.pow(200,Number(v)/100);
+$('speed').value=(100*Math.log(20)/Math.log(200)).toFixed(1);
+function updateSpeedFromSlider(){speed=sliderToSpeed($('speed').value);$('speedValue').textContent=(speed<1?speed.toFixed(2):speed.toFixed(1))+'×';$('speed').setAttribute('aria-valuetext',$('speedValue').textContent);}
+$('speed').oninput=updateSpeedFromSlider;
+updateSpeedFromSlider();
+$('pickRange').oninput=e=>goPick(Number(e.target.value)-1,false);
+$('mode').onchange=e=>{mode=e.target.value;goPick(Math.min(pick,totalPicks()-1),false);createPattern();updateHud(true);};
+$('density').onchange=e=>{const frac=pick/Math.max(1,totalPicks()-1);picksPerBit=Number(e.target.value);goPick(Math.round(frac*(totalPicks()-1)),false);createPattern();updateHud(true);};
+$('weftChoice').onchange=e=>{weftChoice=e.target.value;updateHud(true);};
+for(const id of ['warpColor','weftRedColor','weftWhiteColor','warpDiameter','weftDiameter']) $(id).addEventListener('input',()=>{ $('warpDiameterValue').textContent=warpDiameter().toFixed(1);$('weftDiameterValue').textContent=weftDiameter().toFixed(1);updateHud(true);});
+$('downloadCSV').onclick=()=>{
+ const rows=[['織り方', $('mode').selectedOptions[0].textContent],['図案1段あたりの投数',picksPerBit],['経糸', '16本'],['綜絖',shaftCount()+'枚'],['綜絖の番号','手前（布側）から1番'],['ペダルの番号','左から1番'],['経糸色',warpColor()],['緯糸色A',colorA()],['緯糸色B',colorB()],['経糸径（mm相当）',warpDiameter()],['緯糸径（mm相当）',weftDiameter()],['注意',mode==='satin5'?'5枚必要／4枚織機では不可':mode==='hota'?'3平+1浮の教育用簡略組織':'学習用3D模式図'],[],['投数','図案段（下から）','段内投数','上がる綜絖＝踏むペダル','方向','緯糸の色','緯糸を通す経糸区間']];
+ for(let k=0;k<totalPicks();k++){
+   const g=groups(k),lifts=liftFor(k);
+   rows.push([k+1,16-rowOf(k),k%picksPerBit+1,lifts.join('+'),odd(k)?'左→右':'右→左',g.map(v=>v.name).join(' / '),g.map(v=>`${v.name}${fmt(v.a,v.b)}番`).join(' → ')]);
+ }
+ const text='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');
+ const blob=new Blob([text],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=`16本_織組織_${mode}_${picksPerBit}投.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);
+};
+$('cameraPreset').onchange=e=>setPreset(e.target.value);
+
+
+
+$('fullscreen').onclick=async()=>{let sh=$('sceneShell');if(document.fullscreenElement){await document.exitFullscreen();return;}if(sh.classList.contains('expanded')){sh.classList.remove('expanded');resize();return;}if(sh.requestFullscreen){try{await sh.requestFullscreen();resize();return;}catch(e){}}sh.classList.add('expanded');resize();};
+document.addEventListener('fullscreenchange',resize);
+for(const id of ['frames','shaftLabels','warp','parked','projMode']){const el=$(id);if(el)el.addEventListener('change',()=>updateHud(true));}
+// Header help. Native dialog supports Esc and focuses the close button.
+const helpDialog=$('loomHelp');
+$('helpOpen').addEventListener('click',()=>{if(!helpDialog.open)helpDialog.showModal();$('helpClose').focus();});
+$('helpClose').addEventListener('click',()=>helpDialog.close());
+helpDialog.addEventListener('click',e=>{if(e.target===helpDialog)helpDialog.close();});
+// Mouse: left drag rotates; right drag pans parallel to the screen plane.
+// Touch: one finger rotates, two fingers zoom.
+let touchPts=new Map(),lastPinchDist=0;
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+// ── Drag the loom parts: shafts up/down, reed forward/back, shuttle left/right ──
+function canvasXY(e){const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];}
+function segDist2D(px,py,a,b){const A=proj(a),B=proj(b);if(A.d<=.2||B.d<=.2)return Infinity;const dx=B.x-A.x,dy=B.y-A.y,L=dx*dx+dy*dy||1;const t=clamp(((px-A.x)*dx+(py-A.y)*dy)/L,0,1);return Math.hypot(A.x+dx*t-px,A.y+dy*t-py);}
+function hitPart(px,py){
+ setCameraBasis();const st=stageAt(pick,elapsed);let best=null;
+ const take=(kind,id,d,anchor)=>{if(d<(best?best.d:Infinity))best={kind,id,d,anchor};};
+ if(manualShuttleAt){const c=[manualShuttleAt.x,manualShuttleAt.y,manualShuttleAt.z],P=proj(c);if(P.d>.2)take('shuttle',0,Math.max(0,Math.hypot(P.x-px,P.y-py)-16),c);}
+ const rz=reedPosition(st);
+ for(const [a,b] of [[[-3.03,1.24,rz],[3.03,1.24,rz]],[[-3.03,-1.24,rz],[3.03,-1.24,rz]],[[-3.03,-1.24,rz],[-3.03,1.24,rz]],[[3.03,-1.24,rz],[3.03,1.24,rz]]])
+   take('reed',0,segDist2D(px,py,a,b),[0,1.24,rz]);
+ if($('frames').checked){const lifts=liftFor(pick);
+  for(let sh=1;sh<=shaftCount();sh++){const z=heddleZ(sh),cy=(lifts.includes(sh)?1:-1)*SHAFT_LIFT*st.open+manual.shaft[sh],hi=cy+.49,lo=cy-.49;
+   for(const [a,b] of [[[-3.06,hi,z],[3.06,hi,z]],[[-3.06,lo,z],[3.06,lo,z]],[[-3.06,lo,z],[-3.06,hi,z]],[[3.06,lo,z],[3.06,hi,z]]])
+     take('shaft',sh,segDist2D(px,py,a,b),[0,hi,z]);}}
+ return best&&best.d<9?best:null;
+}
+const PART_AXIS={shaft:[0,1,0],reed:[0,0,1],shuttle:[1,0,0]};
+const PART_CURSOR={shaft:'ns-resize',reed:'move',shuttle:'ew-resize'};
+let partDrag=null;
+function partAnchor(kind,id){const st=stageAt(pick,elapsed);
+ if(kind==='shaft'){const cy=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open+manual.shaft[id];return [0,cy+.49,heddleZ(id)];}
+ if(kind==='reed')return [0,1.24,reedPosition(st)];
+ return manualShuttleAt?[manualShuttleAt.x,manualShuttleAt.y,manualShuttleAt.z]:[0,0,0];}
+function dragPart(dx,dy){
+ setCameraBasis();const {kind,id}=partDrag,P=partAnchor(kind,id),A=proj(P),B=proj(vAdd(P,PART_AXIS[kind]));
+ const sx=B.x-A.x,sy=B.y-A.y,L=sx*sx+sy*sy;if(L<4)return;const du=(dx*sx+dy*sy)/L;
+ const st=stageAt(pick,elapsed);
+ if(kind==='shaft'){const base=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open;manual.shaft[id]=clamp(manual.shaft[id]+du,-.95-base,.95-base);}
+ else if(kind==='reed'){const base=reedBase(st);manual.reed=clamp(manual.reed+du,REED_MIN-base,fellZ(pick)-.13-base);}
+ else {const baseX=(manualShuttleAt?manualShuttleAt.x:0)-manual.shuttle;manual.shuttle=clamp(manual.shuttle+du,-3.0-baseX,3.0-baseX);}
+}
+canvas.addEventListener('pointermove',e=>{if(touchPts.size||partDrag)return;const [x,y]=canvasXY(e);const h=hitPart(x,y);canvas.style.cursor=h?PART_CURSOR[h.kind]:'grab';});
+canvas.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse' && e.button!==0 && e.button!==2)return;
+  if(e.button===0&&!touchPts.size){const [x,y]=canvasXY(e),h=hitPart(x,y);
+    if(h){e.preventDefault();e.stopImmediatePropagation();canvas.setPointerCapture(e.pointerId);isPlaying=false;
+      partDrag={kind:h.kind,id:h.id,pid:e.pointerId,x:e.clientX,y:e.clientY};canvas.style.cursor=PART_CURSOR[h.kind];return;}}
+},true);
+canvas.addEventListener('pointermove',e=>{if(!partDrag||e.pointerId!==partDrag.pid)return;e.stopImmediatePropagation();
+  dragPart(e.clientX-partDrag.x,e.clientY-partDrag.y);partDrag.x=e.clientX;partDrag.y=e.clientY;},true);
+const endPartDrag=e=>{if(!partDrag||e.pointerId!==partDrag.pid)return;e.stopImmediatePropagation();
+  if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);partDrag=null;canvas.style.cursor='grab';};
+canvas.addEventListener('pointerup',endPartDrag,true);canvas.addEventListener('pointercancel',endPartDrag,true);
+canvas.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse' && e.button!==0 && e.button!==2)return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  touchPts.set(e.pointerId,{
+    x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false,
+    mode:(e.pointerType==='mouse'&&e.button===2)?'pan':'rotate',
+    noToggle:e.button===2 || (e.pointerType==='mouse'&&e.button!==0), multi:false
+  });
+  if(touchPts.size>1) for(const entry of touchPts.values()) entry.multi=true;
+  canvas.style.cursor=(e.pointerType==='mouse'&&e.button===2)?'move':'grabbing';
+});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointermove',e=>{
+  if(!touchPts.has(e.pointerId))return;
+  const prev=touchPts.get(e.pointerId);
+  const dx=e.clientX-prev.x,dy=e.clientY-prev.y;
+  const moved=prev.moved||Math.hypot(e.clientX-prev.startX,e.clientY-prev.startY)>=6;
+  touchPts.set(e.pointerId,{...prev,x:e.clientX,y:e.clientY,moved});
+  if(touchPts.size===1){
+    if(!moved)return;
+    if(prev.mode==='pan'){
+      setCameraBasis();
+      const worldPerPixel=$('projMode').value==='ortho'?1/cbasis.orthoScale:(2*camera.dist*Math.tan(.44))/Math.max(1,size.h);
+      const right=cbasis.right,up=cbasis.up;
+      camera.target=[
+        camera.target[0]+worldPerPixel*(-dx*right[0]+dy*up[0]),
+        camera.target[1]+worldPerPixel*(-dx*right[1]+dy*up[1]),
+        camera.target[2]+worldPerPixel*(-dx*right[2]+dy*up[2])
+      ];
+    }else{
+      camera.az-=dx*.007;
+      camera.el=clamp(camera.el+dy*.007,-1.53,1.53);
+    }
+    $('cameraPreset').value='';
+  }else if(touchPts.size===2){
+    const p=[...touchPts.values()];
+    const dist=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    if(lastPinchDist>0)camera.dist=clamp(camera.dist*lastPinchDist/Math.max(1,dist),1.65,32);
+    lastPinchDist=dist;
+  }
+});
+function clearPointer(e){
+  const state=touchPts.get(e.pointerId);
+  const isSingleTap=state && !state.moved && !state.multi && !state.noToggle &&
+    Math.hypot(e.clientX-state.startX,e.clientY-state.startY)<6 && touchPts.size===1;
+  touchPts.delete(e.pointerId);lastPinchDist=0;
+  if(!touchPts.size)canvas.style.cursor='grab';
+  if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+  if(e.type==='pointerup' && isSingleTap) $('play').click();
+}
+canvas.addEventListener('pointerup',clearPointer);
+canvas.addEventListener('pointercancel',clearPointer);
+canvas.addEventListener('wheel',e=>{e.preventDefault();camera.dist=clamp(camera.dist*Math.exp(e.deltaY*.0012),1.65,32)},{passive:false});
+window.addEventListener('keydown',e=>{if(helpDialog.open||e.target.matches('select,input,button,textarea'))return;if(e.key===' '){e.preventDefault();$('play').click();}else if(e.key==='ArrowRight')$('next').click();else if(e.key==='ArrowLeft')$('prev').click();});
+
+
+
+
+// ── 図柄の手描き（綴織） ──
+const PIX_ORIGINAL=PIX.map(r=>r.slice());
+for(const id of ['weftRedColor','weftWhiteColor'])$(id).addEventListener('input',()=>{if(mode==='tapestry')createPattern();});
+function patternChanged(){createPattern();prevHudKey='';updateHud(true);}
+(function enablePatternPaint(){
+ const grid=$('pattern');let paint=null;
+ const apply=el=>{if(!el||!el.classList.contains('pixel')||el.dataset.x===undefined)return;const r=+el.dataset.row,x=+el.dataset.x;if(PIX[r][x]===paint)return;PIX[r][x]=paint;
+   el.classList.toggle('red',paint===0);el.classList.toggle('white',paint===1);el.style.background=paint===0?colorA():colorB();};
+ grid.addEventListener('pointerdown',e=>{if(mode!=='tapestry')return;const el=e.target.closest('.pixel');if(!el)return;e.preventDefault();
+   paint=PIX[+el.dataset.row][+el.dataset.x]===0?1:0;apply(el);try{grid.setPointerCapture(e.pointerId);}catch(_){}});
+ grid.addEventListener('pointermove',e=>{if(paint===null)return;apply(document.elementFromPoint(e.clientX,e.clientY));});
+ const end=()=>{if(paint===null)return;paint=null;patternChanged();};
+ grid.addEventListener('pointerup',end);grid.addEventListener('pointercancel',end);
+ $('patInvert').onclick=()=>{for(const r of PIX)for(let x=0;x<16;x++)r[x]=1-r[x];patternChanged();};
+ $('patClear').onclick=()=>{for(const r of PIX)r.fill(1);patternChanged();};
+ $('patReset').onclick=()=>{PIX_ORIGINAL.forEach((r,i)=>PIX[i]=r.slice());patternChanged();};
+})();
+window.__loomDebug=()=>({mode,picksPerBit,totalPicks:totalPicks(),pick,elapsed,phase:stageAt(pick,elapsed).phase,segments:groups(pick).length,lifts:liftFor(pick),shaftCount:shaftCount(),canvas:[canvas.width,canvas.height],playing:isPlaying,az:camera.az,el:camera.el,target:[...camera.target],projection:$('projMode').value,zoomDistance:camera.dist,shaftLabels:$('shaftLabels').checked,warpColor:warpColor(),weftA:colorA(),weftB:colorB(),warpDiameter:warpDiameter(),weftDiameter:weftDiameter(),wovenCrossings:pick*16,reedZ:reedPosition(stageAt(pick,elapsed))});
+</script><dialog class="qr-dialog" id="qrDialog" aria-labelledby="qrTitle"><div class="qr-card"><div class="qr-code"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges" role="img" aria-label="https://scd-ku.github.io/hataori/ のQRコード"><rect width="33" height="33" fill="#fff"/><path d="M2 2h1v1h-1zM3 2h1v1h-1zM4 2h1v1h-1zM5 2h1v1h-1zM6 2h1v1h-1zM7 2h1v1h-1zM8 2h1v1h-1zM10 2h1v1h-1zM12 2h1v1h-1zM15 2h1v1h-1zM16 2h1v1h-1zM18 2h1v1h-1zM19 2h1v1h-1zM20 2h1v1h-1zM24 2h1v1h-1zM25 2h1v1h-1zM26 2h1v1h-1zM27 2h1v1h-1zM28 2h1v1h-1zM29 2h1v1h-1zM30 2h1v1h-1zM2 3h1v1h-1zM8 3h1v1h-1zM12 3h1v1h-1zM15 3h1v1h-1zM16 3h1v1h-1zM17 3h1v1h-1zM20 3h1v1h-1zM21 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM30 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM8 4h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM16 4h1v1h-1zM19 4h1v1h-1zM20 4h1v1h-1zM21 4h1v1h-1zM22 4h1v1h-1zM24 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM28 4h1v1h-1zM30 4h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM13 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM24 5h1v1h-1zM26 5h1v1h-1zM27 5h1v1h-1zM28 5h1v1h-1zM30 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM11 6h1v1h-1zM12 6h1v1h-1zM13 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM22 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1zM28 6h1v1h-1zM30 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM13 7h1v1h-1zM14 7h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1zM24 7h1v1h-1zM30 7h1v1h-1zM2 8h1v1h-1zM3 8h1v1h-1zM4 8h1v1h-1zM5 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM25 8h1v1h-1zM26 8h1v1h-1zM27 8h1v1h-1zM28 8h1v1h-1zM29 8h1v1h-1zM30 8h1v1h-1zM10 9h1v1h-1zM11 9h1v1h-1zM12 9h1v1h-1zM14 9h1v1h-1zM15 9h1v1h-1zM17 9h1v1h-1zM18 9h1v1h-1zM19 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM2 10h1v1h-1zM6 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM15 10h1v1h-1zM19 10h1v1h-1zM20 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM24 10h1v1h-1zM25 10h1v1h-1zM26 10h1v1h-1zM27 10h1v1h-1zM30 10h1v1h-1zM3 11h1v1h-1zM4 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM10 11h1v1h-1zM11 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM18 11h1v1h-1zM19 11h1v1h-1zM20 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM26 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM29 11h1v1h-1zM30 11h1v1h-1zM3 12h1v1h-1zM5 12h1v1h-1zM8 12h1v1h-1zM13 12h1v1h-1zM18 12h1v1h-1zM20 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM30 12h1v1h-1zM2 13h1v1h-1zM3 13h1v1h-1zM5 13h1v1h-1zM6 13h1v1h-1zM7 13h1v1h-1zM9 13h1v1h-1zM13 13h1v1h-1zM16 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM29 13h1v1h-1zM30 13h1v1h-1zM3 14h1v1h-1zM5 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM12 14h1v1h-1zM14 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM17 14h1v1h-1zM19 14h1v1h-1zM21 14h1v1h-1zM23 14h1v1h-1zM29 14h1v1h-1zM2 15h1v1h-1zM5 15h1v1h-1zM6 15h1v1h-1zM10 15h1v1h-1zM11 15h1v1h-1zM13 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM23 15h1v1h-1zM24 15h1v1h-1zM26 15h1v1h-1zM27 15h1v1h-1zM28 15h1v1h-1zM29 15h1v1h-1zM30 15h1v1h-1zM2 16h1v1h-1zM3 16h1v1h-1zM4 16h1v1h-1zM5 16h1v1h-1zM8 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM11 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM16 16h1v1h-1zM17 16h1v1h-1zM19 16h1v1h-1zM24 16h1v1h-1zM25 16h1v1h-1zM27 16h1v1h-1zM28 16h1v1h-1zM30 16h1v1h-1zM4 17h1v1h-1zM5 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM12 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM19 17h1v1h-1zM24 17h1v1h-1zM29 17h1v1h-1zM30 17h1v1h-1zM3 18h1v1h-1zM5 18h1v1h-1zM7 18h1v1h-1zM8 18h1v1h-1zM10 18h1v1h-1zM11 18h1v1h-1zM13 18h1v1h-1zM15 18h1v1h-1zM17 18h1v1h-1zM19 18h1v1h-1zM22 18h1v1h-1zM29 18h1v1h-1zM2 19h1v1h-1zM5 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM12 19h1v1h-1zM15 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM20 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM26 19h1v1h-1zM27 19h1v1h-1zM29 19h1v1h-1zM30 19h1v1h-1zM4 20h1v1h-1zM8 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM17 20h1v1h-1zM19 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM30 20h1v1h-1zM5 21h1v1h-1zM6 21h1v1h-1zM9 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM14 21h1v1h-1zM16 21h1v1h-1zM17 21h1v1h-1zM18 21h1v1h-1zM19 21h1v1h-1zM20 21h1v1h-1zM22 21h1v1h-1zM23 21h1v1h-1zM25 21h1v1h-1zM29 21h1v1h-1zM30 21h1v1h-1zM2 22h1v1h-1zM3 22h1v1h-1zM5 22h1v1h-1zM6 22h1v1h-1zM8 22h1v1h-1zM10 22h1v1h-1zM12 22h1v1h-1zM15 22h1v1h-1zM16 22h1v1h-1zM17 22h1v1h-1zM19 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM23 22h1v1h-1zM24 22h1v1h-1zM25 22h1v1h-1zM26 22h1v1h-1zM27 22h1v1h-1zM30 22h1v1h-1zM10 23h1v1h-1zM12 23h1v1h-1zM17 23h1v1h-1zM18 23h1v1h-1zM22 23h1v1h-1zM26 23h1v1h-1zM30 23h1v1h-1zM2 24h1v1h-1zM3 24h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM6 24h1v1h-1zM7 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM13 24h1v1h-1zM15 24h1v1h-1zM16 24h1v1h-1zM17 24h1v1h-1zM18 24h1v1h-1zM19 24h1v1h-1zM20 24h1v1h-1zM21 24h1v1h-1zM22 24h1v1h-1zM24 24h1v1h-1zM26 24h1v1h-1zM27 24h1v1h-1zM28 24h1v1h-1zM30 24h1v1h-1zM2 25h1v1h-1zM8 25h1v1h-1zM11 25h1v1h-1zM15 25h1v1h-1zM18 25h1v1h-1zM19 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM26 25h1v1h-1zM30 25h1v1h-1zM2 26h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM6 26h1v1h-1zM8 26h1v1h-1zM10 26h1v1h-1zM11 26h1v1h-1zM15 26h1v1h-1zM18 26h1v1h-1zM19 26h1v1h-1zM21 26h1v1h-1zM22 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM25 26h1v1h-1zM26 26h1v1h-1zM27 26h1v1h-1zM2 27h1v1h-1zM4 27h1v1h-1zM5 27h1v1h-1zM6 27h1v1h-1zM8 27h1v1h-1zM11 27h1v1h-1zM13 27h1v1h-1zM14 27h1v1h-1zM15 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM18 27h1v1h-1zM20 27h1v1h-1zM22 27h1v1h-1zM23 27h1v1h-1zM30 27h1v1h-1zM2 28h1v1h-1zM4 28h1v1h-1zM5 28h1v1h-1zM6 28h1v1h-1zM8 28h1v1h-1zM11 28h1v1h-1zM13 28h1v1h-1zM16 28h1v1h-1zM17 28h1v1h-1zM19 28h1v1h-1zM22 28h1v1h-1zM23 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM29 28h1v1h-1zM30 28h1v1h-1zM2 29h1v1h-1zM8 29h1v1h-1zM11 29h1v1h-1zM15 29h1v1h-1zM16 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM24 29h1v1h-1zM26 29h1v1h-1zM27 29h1v1h-1zM29 29h1v1h-1zM30 29h1v1h-1zM2 30h1v1h-1zM3 30h1v1h-1zM4 30h1v1h-1zM5 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM10 30h1v1h-1zM12 30h1v1h-1zM13 30h1v1h-1zM17 30h1v1h-1zM19 30h1v1h-1zM22 30h1v1h-1zM23 30h1v1h-1zM24 30h1v1h-1zM26 30h1v1h-1zM29 30h1v1h-1z" fill="#111"/></svg></div><p id="qrTitle">スマートフォンで開く</p><a class="qr-url" href="https://scd-ku.github.io/hataori/">scd-ku.github.io/hataori/</a><button type="button" class="qr-close" id="qrClose">閉じる</button></div></dialog><script>(()=>{const d=document.getElementById('qrDialog');document.getElementById('qrOpen').onclick=()=>d.showModal();document.getElementById('qrClose').onclick=()=>d.close();d.addEventListener('click',e=>{if(e.target===d)d.close();});})();</script></body></html>
