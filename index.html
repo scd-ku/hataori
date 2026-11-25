@@ -816,7 +816,7 @@ header p{margin-top:2px;font-size:11.5px;line-height:18px;letter-spacing:.12em}
 <section><h3>このシミュレーターの特徴</h3><p>16本の経糸（たていと）と4枚の綜絖（そうこう）を使う織機（しょっき）を3D表示します。各綜絖には4本のヘルドがあり、綜絖は<strong>布側の手前から1・2・3・4番</strong>、ペダルは<strong>左から1・2・3・4番</strong>です。</p><p>綴織（つづれおり）・平織（ひらおり）・綾織（あやおり）・保多織（ぼたおり）・4枚朱子風（しゅすふう）を比較できます。<strong>五枚朱子（ごまいしゅす）は5枚の綜絖が必要なため、実機とは異なる参考表示</strong>です。</p><p>糸は円形断面の3Dモデルで、経糸と緯糸（よこいと）の交差、綜絖の上げ下げ、筬（おさ）の打ち込み、小杼（こび）の移動を表示します。糸の色と太さも変更できます。</p></section>
 <section><h3>基本操作</h3><ol><li>3D画面の下にある<strong>「織り方」</strong>を選びます。赤白図案を試すときは綴織を選択してください。</li><li><strong>「図案1段あたり」</strong>で1～4投（とう）を選びます。平織なども同じ16本の経糸で比較できます。</li><li>3D画面内の<strong>「操作・視点・投影」</strong>から再生・一時停止・1投ずつの移動・再生速度の調整を行います。再生速度はスライダーで<strong>0.05倍～10倍</strong>の間を連続的に変更できます。</li><li>経糸・緯糸のカラーピッカーと太さのスライダーを調整します。綜絖の色は1＝桃色、2＝橙色、3＝黄緑色、4＝紫色です。踏んだペダルは濃い背景色と白文字で示します。</li><li>必要なら「全投の操作表（CSV）」で、踏むペダルと使用する糸の手順を保存します。</li></ol></section>
 <section><h3>マウス・視点の操作</h3><ul><li><strong>左ドラッグ：</strong>3Dを回転</li><li><strong>右ドラッグ：</strong>視点を上下左右へ平行移動</li><li><strong>ホイール：</strong>拡大・縮小（専用ボタンはありません）</li><li><strong>視点：</strong>表・裏・真上・横・綜絖の拡大・織り目の拡大などを選択</li><li><strong>投影：</strong>透視投影（遠近あり）／平行投影（遠近なし）を切り替え</li><li><strong>操作パネル：</strong>見出しをドラッグすると3D画面内で移動、クリックすると開閉できます。</li></ul></section>
-<section><h3>部品を手で動かす</h3><p>3D上の<b>綜絖の枠</b>は上下、<b>筬</b>は前後、<b>小杼</b>は左右にドラッグで動かせます（動かすと一時停止）。再生すると、その時点の正しい位置へ自動で戻ってから続きを再開します。</p></section>
+<section><h3>部品を手で動かす</h3><p>3D上の<b>ペダル</b>はクリックで踏む／離す、ドラッグで踏み込み具合を変えられ、踏むと対応する綜絖が上がります。<b>綜絖の枠</b>は上下、<b>筬</b>は前後、<b>小杼</b>は左右にドラッグで動かせます（動かすと一時停止）。再生すると、その時点の正しい位置へ自動で戻ってから続きを再開します。</p></section>
 <section><h3>表示について</h3><p>糸は円筒チューブ、木枠・綜絖・筬は角柱の立体モデルです。経糸間隔・緯糸密度は固定した模式表示で、張力や布厚の物理計算はしていません。小杼の長さや上昇後の動きも説明用です。</p></section>
 <section><h3>織り方と表示上の注意</h3><p>綴織では赤と白の小杼を1つずつ使い、色の区間ごとに緯糸を入れる模式表示です。平織・綾織・保多織などでは1投で幅全体に緯糸を通します。上げる綜絖とペダルの番号は対応しています。</p><p>保多織は「3投の平織＋4投目に浮きを作る」原理を示す簡略組織で、伝統的な組織図の完全再現ではありません。4枚朱子風は正式な朱子織ではありません。緯糸の張力や実物の布厚は厳密に計算していません。</p></section>
 <section><h3>資料</h3><p class="help-sources"><a href="https://www.botaori.com/tokucyo.html" target="_blank" rel="noopener">岩部保多織本舗（3回平織＋4回目の浮き）</a> ／ <a href="https://cottonworks.com/learning-hub/weaving/basic-woven-fabric-designs/" target="_blank" rel="noopener">CottonWorks（5枚以上の朱子織）</a> ／ <a href="https://www.applepie.gr.jp/haru/someorikiso/kumiori4.html" target="_blank" rel="noopener">織物組織と綜絖の基礎</a></p></section>
@@ -967,7 +967,7 @@ const groups=p=>{
 const fmt=(a,b)=>a===b?String(a+1):`${a+1}～${b+1}`;
 const ease=t=>t*t*(3-2*t);const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));const lerp=(a,b,t)=>a+(b-a)*t;
 let pick=28,elapsed=0,isPlaying=false,speed=1;
-let camera={az:.62,el:.46,dist:11.8,target:[0,0,0]};let size={w:850,h:600,dpr:1};
+let camera={az:.62,el:.46,dist:13.6,target:[0,-.45,.75]};let size={w:850,h:600,dpr:1};
 const canvas=$('scene'), ctx=canvas.getContext('2d',{alpha:true});
 
 // ── Standalone WebGL cylindrical yarn renderer (no CDN or external files). ──
@@ -1255,9 +1255,66 @@ for(let i=0;i<16;i++){
  tube3(pts,warpRadius(),col,1,{sides:SIDES,caps:true});
 }
 }
+
+// ── Treadles (ペダル) ───────────────────────────────────────────────
+// Four pedals lie below and in front of the cloth, hinged at the BACK like piano pedals.
+// Each pedal's tilt is derived from its own shaft's actual height, so the animation,
+// dragging a shaft and dragging a pedal always agree: shaft up = pedal pressed down.
+const FRAME_Y_=-.35,FRAME_FRONT_=3.72;
+const TREADLE={pivotY:-1.05,pivotZ:3.86,len:1.15,width:.66,thick:.07,gap:.86,restDeg:14,downDeg:-6};
+const TREADLE_PRESSED=['#b23a6b','#bf6a1c','#5e8a24','#7a52b3','#545b66'];
+function shaftHeight(sh,st){return (liftFor(pick).includes(sh)?1:-1)*SHAFT_LIFT*st.open+manual.shaft[sh];}
+function treadlePress(sh,st){return clamp(shaftHeight(sh,st)/SHAFT_LIFT,0,1);}
+function treadleX(sh){const n=shaftCount();return (sh-1-(n-1)/2)*TREADLE.gap;}
+function treadleFrame(sh,st){
+ const p=treadlePress(sh,st),a=(TREADLE.restDeg+(TREADLE.downDeg-TREADLE.restDeg)*p)*Math.PI/180;
+ const f=[0,Math.sin(a),Math.cos(a)],up=[0,Math.cos(a),-Math.sin(a)],x=treadleX(sh);
+ const pivot=[x,TREADLE.pivotY,TREADLE.pivotZ];
+ return {p,f,up,pivot,top:vAdd(vAdd(pivot,vScale(f,TREADLE.len*.62)),vScale(up,TREADLE.thick+.01)),
+   tip:vAdd(pivot,vScale(f,TREADLE.len))};
+}
+function cuboid3(c,col,alpha=1){ // c: 8 corners, 0-3 bottom (ccw), 4-7 top
+ if(!gpuDraw){poly3([c[4],c[5],c[6],c[7]],col,alpha,null,-.05);return;}
+ const rgb=shadeRGB(col,alpha),face=(i,j,k,l)=>{const n=vNormalize(cross(sub(c[j],c[i]),sub(c[l],c[i])));pushTri(c[i],c[j],c[k],n,n,n,rgb);pushTri(c[i],c[k],c[l],n,n,n,rgb);};
+ face(4,5,6,7);face(3,2,1,0);face(0,1,5,4);face(1,2,6,5);face(2,3,7,6);face(3,0,4,7);
+}
+function drawTreadles(st){
+ const n=shaftCount(),half=(n-1)/2*TREADLE.gap+TREADLE.width/2+.12;
+ // Hinge axle and two brackets tying it to the frame.
+ const m=MAT;MAT=2;
+ woodRail([-half-.1,TREADLE.pivotY,TREADLE.pivotZ],[half+.1,TREADLE.pivotY,TREADLE.pivotZ],.07);
+ for(const x of [-half-.1,half+.1])woodRail([x,TREADLE.pivotY,TREADLE.pivotZ],[x,FRAME_Y_,FRAME_FRONT_],.07);
+ MAT=0;
+ for(let sh=1;sh<=n;sh++){
+  const T=treadleFrame(sh,st),col=SHAFT_COLORS[(sh-1)%SHAFT_COLORS.length],x=treadleX(sh),w=TREADLE.width/2;
+  const pressed=TREADLE_PRESSED[sh-1]||'#545b66',pale=tint(col,.55),c=mixHex(pale,pressed,T.p);
+  const P=(u,l,h)=>vAdd(vAdd(vAdd(T.pivot,[u,0,0]),vScale(T.f,l)),vScale(T.up,h));
+  const box=[P(-w,0,0),P(w,0,0),P(w,TREADLE.len,0),P(-w,TREADLE.len,0),P(-w,0,TREADLE.thick),P(w,0,TREADLE.thick),P(w,TREADLE.len,TREADLE.thick),P(-w,TREADLE.len,TREADLE.thick)];
+  cuboid3(box,c,1);
+  // Dark outline on the top face, like the pedal buttons below the 3D view.
+  const edge=tint(col,-.5),e=TREADLE.thick+.004;
+  path3([P(-w,0,e),P(w,0,e),P(w,TREADLE.len,e),P(-w,TREADLE.len,e),P(-w,0,e)],edge,.012,1);
+  // Hinge knuckle at the back.
+  MAT=3;line3(P(-w*.55,0,-.02),P(w*.55,0,-.02),'#c9d1d6',.05,1);MAT=0;
+ }
+ MAT=m;
+}
+function mixHex(a,b,t){const A=[1,3,5].map(k=>parseInt(a.slice(k,k+2),16)),B=[1,3,5].map(k=>parseInt(b.slice(k,k+2),16));
+ return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+function drawTreadleNumbers(st){
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ for(let sh=1;sh<=shaftCount();sh++){
+  const T=treadleFrame(sh,st),pp=proj(T.top);if(pp.d<=.2)continue;
+  const col=SHAFT_COLORS[(sh-1)%SHAFT_COLORS.length],fs=clamp(pp.s*.32,13,34);
+  ctx.font=`600 ${fs}px 'Zen Old Mincho','Hiragino Mincho ProN',serif`;
+  ctx.fillStyle=T.p>.5?'#ffffff':tint(col,-.5);   // 踏んだら白抜き
+  ctx.fillText(String(sh),pp.x,pp.y);
+ }
+ ctx.restore();
+}
 function drawFrame(st){const hd=heddleData(pick,st.open);
 // The four outer wood rails meet at exactly the same Y and Z corners.
-const FRAME_Y=-.35, FRAME_BACK=-3.80, FRAME_FRONT=3.72, FRAME_LEFT=-3.25, FRAME_RIGHT=3.25;
+const FRAME_Y=FRAME_Y_, FRAME_BACK=-3.80, FRAME_FRONT=FRAME_FRONT_, FRAME_LEFT=-3.25, FRAME_RIGHT=3.25;
 for(const x of [FRAME_LEFT,FRAME_RIGHT]) woodRail([x,FRAME_Y,FRAME_BACK],[x,FRAME_Y,FRAME_FRONT],.105);
 for(const z of [FRAME_BACK,FRAME_FRONT]) woodRail([FRAME_LEFT,FRAME_Y,z],[FRAME_RIGHT,FRAME_Y,z],.105);
 // No central transverse wooden bars: the moving reed is a separate assembly.
@@ -1533,7 +1590,7 @@ function updateDynamicMesh(st){
  $('frames').checked,$('parked').checked,shaftCount(),manual.shaft.join(','),manual.reed.toFixed(4),manual.shuttle.toFixed(4)].join('|');
  if(key===gpuDynamicKey)return gpuCachedActive;
  gpuDynamicKey=key;meshVertices=[];gpuDraw=true;
- drawFrame(st);drawReed(st);gpuCachedActive=drawActiveWeft(st);
+ drawFrame(st);drawTreadles(st);drawReed(st);gpuCachedActive=drawActiveWeft(st);
  gpuDraw=false;
  const data=new Float32Array(meshVertices);gpuDynamicCount=data.length/VSTRIDE;
  gl.bindBuffer(gl.ARRAY_BUFFER,gpuBuffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);
@@ -1543,9 +1600,10 @@ function updateDynamicMesh(st){
 function draw(st){setCameraBasis();ctx.clearRect(0,0,size.w,size.h);
  let active;
  if(gpuReady){updateStaticMesh();active=updateDynamicMesh(st);renderGPU();}
- else{ctx.fillStyle='#3a4853';ctx.fillRect(0,0,size.w,size.h);cmds=[];gpuDraw=false;drawWoven();drawFrame(st);drawReed(st);active=drawActiveWeft(st);cmds.sort((a,b)=>b.d-a.d);for(const c of cmds)c.draw();}
+ else{ctx.fillStyle='#3a4853';ctx.fillRect(0,0,size.w,size.h);cmds=[];gpuDraw=false;drawWoven();drawFrame(st);drawTreadles(st);drawReed(st);active=drawActiveWeft(st);cmds.sort((a,b)=>b.d-a.d);for(const c of cmds)c.draw();}
 if($('warp').checked){for(let i=0;i<16;i++){drawText3([wx(i),.03,3.82],String(i+1),'#f1e9d8',10)}}
 
+drawTreadleNumbers(st);
 upperInfo(active,st);
 drawShaftLabels(st);
 }
@@ -1557,7 +1615,7 @@ else if(v==='side')camera={az:1.49,el:-.16,dist:10.9,target:[0,0,-.45]};
 else if(v==='shed')camera={az:.66,el:-.34,dist:7.2,target:[0,0,-.85]};
 else if(v==='fabric')camera={az:.14,el:-.52,dist:5.7,target:[0,-.02,3.0]};
 else if(v==='heddles')camera={az:1.02,el:.27,dist:4.8,target:[.0,0,-2.43]};
-else if(v==='angled')camera={az:.62,el:.46,dist:11.8,target:[0,0,0]};
+else if(v==='angled')camera={az:.62,el:.46,dist:13.6,target:[0,-.45,.75]};
 else if(v==='backside')camera={az:.35,el:.72,dist:11.1,target:[0,0,0]};
 else camera={az:.35,el:-.72,dist:11.1,target:[0,0,0]};}
 function nextSegment(){
@@ -1714,20 +1772,32 @@ function hitPart(px,py){
   for(let sh=1;sh<=shaftCount();sh++){const z=heddleZ(sh),cy=(lifts.includes(sh)?1:-1)*SHAFT_LIFT*st.open+manual.shaft[sh],hi=cy+.49,lo=cy-.49;
    for(const [a,b] of [[[-3.06,hi,z],[3.06,hi,z]],[[-3.06,lo,z],[3.06,lo,z]],[[-3.06,lo,z],[-3.06,hi,z]],[[3.06,lo,z],[3.06,hi,z]]])
      take('shaft',sh,segDist2D(px,py,a,b),[0,hi,z]);}}
+ for(let sh=1;sh<=shaftCount();sh++){const T=treadleFrame(sh,st),w=TREADLE.width/2,e=TREADLE.thick;
+   const P=(u,l)=>vAdd(vAdd(vAdd(T.pivot,[u,0,0]),vScale(T.f,l)),vScale(T.up,e));
+   const A=proj(P(-w,0)),B=proj(P(w,0)),C=proj(P(w,TREADLE.len)),D=proj(P(-w,TREADLE.len));
+   if([A,B,C,D].some(q=>q.d<=.2))continue;
+   const inside=(()=>{let sgn=0;for(const [p,q] of [[A,B],[B,C],[C,D],[D,A]]){const c=(q.x-p.x)*(py-p.y)-(q.y-p.y)*(px-p.x);if(c===0)continue;const sg=Math.sign(c);if(sgn&&sg!==sgn)return false;sgn=sg;}return true;})();
+   take('pedal',sh,inside?0:Math.min(...[[A,B],[B,C],[C,D],[D,A]].map(([p,q])=>segDist2D(px,py,P(-w,0),P(-w,0))*0+(()=>{const dx=q.x-p.x,dy=q.y-p.y,L=dx*dx+dy*dy||1,t=clamp(((px-p.x)*dx+(py-p.y)*dy)/L,0,1);return Math.hypot(p.x+dx*t-px,p.y+dy*t-py);})())),T.tip);}
  return best&&best.d<9?best:null;
 }
-const PART_AXIS={shaft:[0,1,0],reed:[0,0,1],shuttle:[1,0,0]};
-const PART_CURSOR={shaft:'ns-resize',reed:'move',shuttle:'ew-resize'};
+const PART_AXIS={shaft:[0,1,0],reed:[0,0,1],shuttle:[1,0,0],pedal:[0,-1,0]};
+const PART_CURSOR={shaft:'ns-resize',reed:'move',shuttle:'ew-resize',pedal:'pointer'};
 let partDrag=null;
 function partAnchor(kind,id){const st=stageAt(pick,elapsed);
  if(kind==='shaft'){const cy=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open+manual.shaft[id];return [0,cy+.49,heddleZ(id)];}
  if(kind==='reed')return [0,1.24,reedPosition(st)];
+ if(kind==='pedal')return treadleFrame(id,st).tip;
  return manualShuttleAt?[manualShuttleAt.x,manualShuttleAt.y,manualShuttleAt.z]:[0,0,0];}
 function dragPart(dx,dy){
  setCameraBasis();const {kind,id}=partDrag,P=partAnchor(kind,id),A=proj(P),B=proj(vAdd(P,PART_AXIS[kind]));
  const sx=B.x-A.x,sy=B.y-A.y,L=sx*sx+sy*sy;if(L<4)return;const du=(dx*sx+dy*sy)/L;
  const st=stageAt(pick,elapsed);
  if(kind==='shaft'){const base=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open;manual.shaft[id]=clamp(manual.shaft[id]+du,-.95-base,.95-base);}
+ else if(kind==='pedal'){ // pressing the pedal tip down by its full travel lifts the shaft by SHAFT_LIFT
+   partDrag.moved=(partDrag.moved||0)+Math.abs(dx)+Math.abs(dy);
+   const travel=TREADLE.len*(Math.sin(TREADLE.restDeg*Math.PI/180)-Math.sin(TREADLE.downDeg*Math.PI/180));
+   const base=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open,y=clamp(base+manual.shaft[id],0,SHAFT_LIFT);
+   manual.shaft[id]=clamp(y+du/travel*SHAFT_LIFT,0,SHAFT_LIFT)-base;}
  else if(kind==='reed'){const base=reedBase(st);manual.reed=clamp(manual.reed+du,REED_MIN-base,fellZ(pick)-.13-base);}
  else {const baseX=(manualShuttleAt?manualShuttleAt.x:0)-manual.shuttle;manual.shuttle=clamp(manual.shuttle+du,-3.0-baseX,3.0-baseX);}
 }
@@ -1741,6 +1811,9 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointermove',e=>{if(!partDrag||e.pointerId!==partDrag.pid)return;e.stopImmediatePropagation();
   dragPart(e.clientX-partDrag.x,e.clientY-partDrag.y);partDrag.x=e.clientX;partDrag.y=e.clientY;},true);
 const endPartDrag=e=>{if(!partDrag||e.pointerId!==partDrag.pid)return;e.stopImmediatePropagation();
+  if(partDrag.kind==='pedal'&&(partDrag.moved||0)<4){ // a click toggles the pedal: press fully / release
+    const st=stageAt(pick,elapsed),id=partDrag.id,base=(liftFor(pick).includes(id)?1:-1)*SHAFT_LIFT*st.open;
+    const pressedNow=treadlePress(id,st)>.5;manual.shaft[id]=(pressedNow?Math.min(0,-SHAFT_LIFT*st.open):SHAFT_LIFT)-base;}
   if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);partDrag=null;canvas.style.cursor='grab';};
 canvas.addEventListener('pointerup',endPartDrag,true);canvas.addEventListener('pointercancel',endPartDrag,true);
 canvas.addEventListener('pointerdown',e=>{
